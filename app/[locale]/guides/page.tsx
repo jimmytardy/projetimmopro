@@ -105,8 +105,8 @@ export default async function GuidesPage({
       <JsonLd
         type="BreadcrumbList"
         items={[
-          { name: tCommon('home'), item: siteUrl },
-          { name: t('breadcrumb'), item: `${siteUrl}/guides` },
+          { name: tCommon('home'), url: siteUrl },
+          { name: t('breadcrumb'), url: `${siteUrl}/guides` },
         ]}
       />
 
