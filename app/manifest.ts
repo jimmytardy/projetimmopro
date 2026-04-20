@@ -25,11 +25,16 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: 'any',
       },
       {
-        // Apple Touch Icon 180×180 généré par app/apple-icon.tsx
         src:     '/apple-icon',
         sizes:   '180x180',
         type:    'image/png',
-        purpose: 'any maskable',
+        purpose: 'any',
+      },
+      {
+        src:     '/apple-icon',
+        sizes:   '180x180',
+        type:    'image/png',
+        purpose: 'maskable',
       },
     ],
   }
