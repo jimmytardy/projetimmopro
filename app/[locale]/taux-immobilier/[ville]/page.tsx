@@ -23,9 +23,9 @@ export function generateStaticParams() {
   )
 }
 
-type AnyCity = ReturnType<typeof getCityBySlug> | DynamicCity
+type AnyCity = NonNullable<ReturnType<typeof getCityBySlug>> | DynamicCity
 
-async function resolveCity(ville: string): Promise<AnyCity> {
+async function resolveCity(ville: string): Promise<AnyCity | null> {
   const staticCity = getCityBySlug(ville)
   if (staticCity) return staticCity
   return fetchCityBySlug(ville)
