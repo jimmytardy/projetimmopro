@@ -2,7 +2,8 @@
 
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
-import { Home, Shield, FileText } from 'lucide-react'
+import { Shield, FileText } from 'lucide-react'
+import Logo from '@/components/Logo'
 
 export default function Footer() {
   const t = useTranslations('footer')
@@ -40,11 +41,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
           {/* Colonne marque */}
           <div>
-            <Link href="/" className="flex items-center gap-2 mb-4 group">
-              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <Home className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-bold text-white text-lg">PrêtImmoPro</span>
+            <Link href="/" className="inline-block mb-4 hover:opacity-80 transition-opacity" aria-label="PrêtImmoPro — Accueil">
+              <Logo size={32} showName={true} nameColor="white" />
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed">{t('tagline')}</p>
             <div className="flex items-center gap-2 mt-4 bg-gray-800 rounded-lg px-3 py-2">

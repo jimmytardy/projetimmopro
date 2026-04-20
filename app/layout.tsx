@@ -30,17 +30,21 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
   return (
     <html lang={locale} className={inter.variable}>
-      <head>
+      <body className={`${inter.variable} font-sans min-h-screen flex flex-col`}>
+        {/*
+          Script AdSense — injecté dans le <head> par Next.js automatiquement.
+          strategy="afterInteractive" : chargé dès que la page est interactive,
+          équivalent à <script async> dans le <head> selon les specs Google.
+          Ne pas mettre <Script> dans <head> directement (déconseillé par Next.js).
+          Actif en production uniquement pour éviter les erreurs AdSense en dev.
+        */}
         {process.env.NODE_ENV === 'production' && (
           <Script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID ?? 'ca-pub-XXXXXXXXXXXXXXXX'}`}
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID ?? 'ca-pub-7401335592359033'}`}
             crossOrigin="anonymous"
-            strategy="lazyOnload"
+            strategy="afterInteractive"
           />
         )}
-      </head>
-      <body className={`${inter.variable} font-sans min-h-screen flex flex-col`}>
         {children}
       </body>
     </html>

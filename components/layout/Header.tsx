@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
-import { Menu, X, ChevronDown, Home, Calculator, TrendingUp, FileText, MapPin } from 'lucide-react'
+import { Menu, X, ChevronDown, Calculator, TrendingUp, FileText, MapPin } from 'lucide-react'
 import { CITIES } from '@/lib/cities'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
+import Logo from '@/components/Logo'
 
 export default function Header() {
   const t = useTranslations('nav')
@@ -28,13 +29,8 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-              <Home className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-lg text-primary-600 group-hover:text-primary-700">
-              PrêtImmoPro
-            </span>
+          <Link href="/" className="hover:opacity-90 transition-opacity" aria-label="PrêtImmoPro — Accueil">
+            <Logo size={34} showName={true} />
           </Link>
 
           {/* Nav desktop */}
