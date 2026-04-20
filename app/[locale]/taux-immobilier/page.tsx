@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { MapPin, ArrowRight, Search } from 'lucide-react'
 import { CITIES } from '@/lib/cities'
@@ -26,6 +26,7 @@ export default async function TauxImmobilierPage({
 }: {
   params: { locale: string }
 }) {
+  setRequestLocale(locale)
   const tCommon = await getTranslations({ locale, namespace: 'common' })
 
   const ZONES = [

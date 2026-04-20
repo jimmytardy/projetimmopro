@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import fs from 'fs'
@@ -152,6 +152,7 @@ export default async function ArticlePage({
 }: {
   params: { slug: string; locale: string }
 }) {
+  setRequestLocale(locale)
   const data = getArticleData(slug)
   if (!data) notFound()
 

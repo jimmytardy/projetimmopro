@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 import { Info, ArrowRight } from 'lucide-react'
 import { CITIES, getCityBySlug } from '@/lib/cities'
 import { fetchCityBySlug, type DynamicCity } from '@/lib/geocode'
+import { setRequestLocale } from 'next-intl/server'
 import { PTZ_ZONE_LABELS } from '@/lib/departmentData'
 import { Link } from '@/i18n/navigation'
 import Breadcrumb from '@/components/seo/Breadcrumb'
@@ -52,6 +53,7 @@ export default async function VillePage({
 }: {
   params: { ville: string; locale: string }
 }) {
+  setRequestLocale(locale)
   const city = await resolveCity(ville)
   if (!city) notFound()
 

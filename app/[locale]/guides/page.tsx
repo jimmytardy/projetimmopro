@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import fs from 'fs'
 import path from 'path'
@@ -65,6 +65,7 @@ export default async function GuidesPage({
 }: {
   params: { locale: string }
 }) {
+  setRequestLocale(locale)
   const t = await getTranslations({ locale, namespace: 'guides' })
   const tCommon = await getTranslations({ locale, namespace: 'common' })
   const tArticles = await getTranslations({ locale, namespace: 'articles' })

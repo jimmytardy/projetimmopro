@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p ${PORT:-3000}",
-    "build": "next build",
-    "start": "next start -p ${PORT:-3000}",
+    "dev": "dotenv -e .env.local -- next dev",
+    "build": "dotenv -e .env.local -- next build",
+    "start": "dotenv -e .env.local -- next start",
     "lint": "next lint",
     "postbuild": "next-sitemap"
   },
@@ -24,6 +24,7 @@
     "recharts": "^2.13.3"
   },
   "devDependencies": {
+    "dotenv-cli": "^7.4.4",
     "@types/mdx": "^2.0.13",
     "@types/node": "^20.14.0",
     "@types/react": "^18.3.3",

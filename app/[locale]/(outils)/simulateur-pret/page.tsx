@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import dynamic from 'next/dynamic'
 import Breadcrumb from '@/components/seo/Breadcrumb'
 import JsonLd from '@/components/seo/JsonLd'
@@ -77,6 +77,7 @@ export default async function SimulateurPretPage({
 }: {
   params: { locale: string }
 }) {
+  setRequestLocale(locale)
   const t = await getTranslations({ locale, namespace: 'simulateurPret' })
   const tCommon = await getTranslations({ locale, namespace: 'common' })
   const FAQ_ITEMS = locale === 'en' ? FAQ_ITEMS_EN : FAQ_ITEMS_FR
