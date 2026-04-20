@@ -1,0 +1,51 @@
+---
+description: Patterns des simulateurs financiers — structure, sliders, graphiques Recharts
+globs: components/simulators/**
+alwaysApply: false
+---
+
+# Simulateurs — Conventions
+
+## Structure type d'un simulateur
+```tsx
+'use client'
+// 1. State initial avec valeurs réalistes
+const [montant, setMontant] = useState(200000)
+
+// 2. Calculs via useMemo (jamais dans le render)
+const mensualite = useMemo(
+  () => calculerMensualite(montant, taux, duree),
+  [montant, taux, duree]
+)
+
+// 3. UI : section inputs → AdUnit → section résultats
+```
+
+## Composant Slider réutilisable
+Chaque simulateur doit définir un `<Slider>` local avec :
+- Label + valeur formatée dynamique (`format: (v) => string`)
+- `accent-blue-700` sur l'input range
+- Bornes min/max affichées sous le slider
+
+## Metric cards
+```tsx
+<div className="bg-gray-50 rounded-lg p-4">
+  <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">{label}</p>
+  <p className="text-2xl font-bold text-primary-600">{value}</p>
+</div>
+```
+
+## Graphiques Recharts
+- Toujours `<ResponsiveContainer width="100%" height={260}>`
+- Couleur capital : `#1B4F8C` (primary)
+- Couleur intérêts : `#E07B5A` (coral)
+- Tooltip formaté en euros : `toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })`
+
+## Fonctions financières
+Toujours importer depuis `@/lib/calculators` — ne jamais recalculer inline.
+Les fonctions sont pures (pas de side effects).
+
+## Taux d'endettement — couleur sémantique
+```ts
+const accent = taux < 28 ? 'green' : taux < 35 ? 'orange' : 'red'
+```

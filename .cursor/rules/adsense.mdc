@@ -1,0 +1,63 @@
+---
+description: Règles AdSense — placement, anti-CLS, lazy loading, limites
+globs: components/ads/**
+alwaysApply: false
+---
+
+# AdSense — Règles impératives
+
+## Ne jamais rendre côté serveur
+```tsx
+// ✅ Toujours dynamic import avec ssr: false
+const AdUnit = dynamic(() => import('@/components/ads/AdUnit'), { ssr: false })
+```
+
+## Composants disponibles
+| Composant | Usage | Format |
+|-----------|-------|--------|
+| `AdUnit` | Inline dans les pages | leaderboard, rectangle, auto |
+| `FixedSkyscraper` | 1 skyscraper par côté, position fixed | 160×600 |
+| `SideAdsController` | Orchestre les latéraux (usePathname + resize) | — |
+
+## Placement standard par page outil
+```tsx
+<AdUnit slot="before_tool_xxx" format="leaderboard" className="mb-8" />
+<Simulateur />
+<AdUnit slot="after_tool_xxx" format="rectangle" className="my-8" />
+```
+
+## Hauteurs min-height anti-CLS obligatoires
+| Format | min-height |
+|--------|-----------|
+| leaderboard | 90px |
+| rectangle | 250px |
+| skyscraper | 600px |
+| auto | 100px |
+
+## Limites par page — règle stricte
+- Max **4 emplacements actifs** simultanément (2 inline + 2 latéraux)
+- Pas d'annonce dans les 100px autour du bouton CTA principal
+- **1 skyscraper par côté** (jamais 2 empilés) — évite la surcharge visuelle
+
+## Env de dev
+En `NODE_ENV !== 'production'` : placeholder gris avec texte `"AdSense [format]"`.
+Ne jamais afficher de vraies publicités en développement.
+
+## Positionnement latéral (FixedSkyscraper) — UX
+- `position: fixed`, centré verticalement (`top: 50%, translateY(-50%)`)
+- `calc(50vw − 684px)` → toujours à 12px du bord du contenu `max-w-5xl`
+- `will-change: opacity` + `contain: paint` → GPU compositing, pas de repaint
+- **Apparition** : fondu 400ms après 200px de scroll (ne couvre jamais le hero)
+- **Disparition footer** : IntersectionObserver sur `#footer-sentinel` (div de 1px avant `<Footer>`)
+  - `rootMargin: "100px 0px 0px 0px"` → masquage 100px AVANT que le sentinel entre dans le viewport
+  - ⚠️ **Ne jamais utiliser** `docHeight − scrollY` : imprécis selon taille du footer
+- `pointerEvents: none` quand `opacity === 0` (pas de piège de clic invisible)
+- Exclus de la homepage, visibles uniquement si `window.innerWidth >= 1500`
+
+## CSS Core Web Vitals — globals.css
+- `.section-offscreen` → `content-visibility: auto; contain-intrinsic-size: 0 400px;`
+  Appliquer sur les sections hors-écran (articles, FAQ, réassurance).
+  **Ne pas appliquer sur le header/hero ou les éléments `position:fixed`.**
+- `.skeleton` → animation `opacity` GPU (pas `background-position`).
+  Remplacer systématiquement `animate-pulse` par la classe `.skeleton`.
+- `scrollbar-gutter: stable` sur `html` → empêche le CLS dû à l'apparition/disparition de la scrollbar.

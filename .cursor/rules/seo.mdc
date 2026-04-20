@@ -1,0 +1,57 @@
+---
+description: SEO technique — metadata, JSON-LD, sitemap, pages locales
+globs: app/**/page.tsx
+alwaysApply: false
+---
+
+# SEO — Conventions
+
+## Metadata obligatoire sur chaque page
+```tsx
+export const metadata: Metadata = {
+  title: 'Titre unique 50-60 chars | PrêtImmoPro',
+  description: 'Description 150-160 chars avec mots-clés naturels.',
+  alternates: { canonical: '/chemin-de-la-page' },
+  keywords: ['mot clé 1', 'mot clé 2'],
+}
+```
+
+## JSON-LD via `<JsonLd>`
+```tsx
+// Types disponibles : 'WebApplication' | 'Article' | 'FAQPage' | 'BreadcrumbList'
+<JsonLd type="FAQPage" questions={FAQ_ITEMS} />
+<JsonLd type="WebApplication" name="Simulateur de prêt" url="..." />
+```
+
+## Breadcrumb sur toutes les pages profondes
+```tsx
+<Breadcrumb items={[
+  { label: 'Accueil', href: '/' },
+  { label: 'Simulateur de prêt', href: '/simulateur-pret' },
+]} />
+// Génère automatiquement le JSON-LD BreadcrumbList
+```
+
+## Données live des taux (ISR 24h)
+```ts
+// Dans les Server Components — jamais dans les Client Components
+import { getLiveRates } from '@/lib/rates'
+const rates = await getLiveRates() // cache ISR 24h automatique
+```
+
+## Pages locales (taux-immobilier/[ville])
+- `generateStaticParams()` retourne les 8 slugs de `CITIES`
+- H1 : `"Taux immobilier à [Ville] en 2026"`
+- Schema `LocalBusiness` JSON-LD inline
+- Taux ajusté localement : `getTauxPourVille(tauxNational, duree, city.tauxMoyen)`
+
+## Articles MDX
+- Frontmatter requis : `title`, `description`, `date`, `lastModified`, `keywords[]`
+- Fichiers dans `content/articles/[slug].mdx`
+- URL automatique : `/articles/[slug]`
+
+## Sitemap (next-sitemap)
+Priorités dans `next-sitemap.config.js` :
+- Pages outils → `1.0`
+- Articles → `0.8`
+- Pages locales → `0.7`

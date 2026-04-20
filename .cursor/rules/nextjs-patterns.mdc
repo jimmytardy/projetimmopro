@@ -1,0 +1,51 @@
+---
+description: Patterns Next.js App Router — Server Components, ISR, dynamic imports
+globs: app/**/*.tsx
+alwaysApply: false
+---
+
+# Next.js App Router — Règles
+
+## Server vs Client Components
+
+```tsx
+// ✅ Server Component (défaut) — fetch, metadata, JSON-LD
+export default async function Page() {
+  const data = await getLiveRates() // fetch avec cache ISR
+  return <RatesTable data={data} />
+}
+
+// ✅ Client Component — interactivité, useState, useEffect
+'use client'
+export default function SimulateurPret() { ... }
+```
+
+## Règle critique : simulateurs = toujours `'use client'`
+Les 6 composants dans `components/simulators/` sont tous `'use client'`.
+Les pages qui les importent utilisent `dynamic(..., { ssr: false })`.
+
+## Cache ISR pour les données live
+```ts
+// lib/rates.ts — toujours utiliser next: { revalidate: 86400 }
+const res = await fetch(url, { next: { revalidate: 86400 } })
+```
+
+## Structure d'une page outil
+```tsx
+// 1. Metadata SEO avec canonical
+export const metadata: Metadata = {
+  title: '...',
+  alternates: { canonical: '/simulateur-pret' },
+}
+// 2. Breadcrumb + H1 + intro
+// 3. <AdUnit slot="before_tool" format="leaderboard" />
+// 4. Simulateur (dynamic import, ssr: false)
+// 5. <AdUnit slot="after_tool" format="rectangle" />
+// 6. FAQ avec <JsonLd type="FAQPage" />
+// 7. Article de fond SEO (prose)
+```
+
+## Groupes de routes
+- `(outils)/` → pages simulateurs (pas dans l'URL)
+- `(articles)/` → template MDX dynamique `[slug]`
+- `taux-immobilier/[ville]/` → pages locales statiques via `generateStaticParams()`

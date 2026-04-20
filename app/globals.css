@@ -1,0 +1,203 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /*
+   * ─── Performances Core Web Vitals ─────────────────────────────────────────
+   *
+   * scroll-behavior: smooth  → navigation ancres fluide (UX)
+   * text-rendering           → meilleure lisibilité (sans coût CLS)
+   * -webkit-font-smoothing   → rendu antialiasé sur macOS/iOS
+   *
+   * CLS (Cumulative Layout Shift)
+   *   – Les images utilisent next/image qui force width/height → pas de CLS image
+   *   – Les publicités AdUnit ont min-height inline → pas de CLS pub
+   *   – Les polices utilisent next/font avec display:swap → pas de FOUT bloquant
+   *
+   * LCP (Largest Contentful Paint)
+   *   – Le hero est en static HTML, pas de JS bloquant
+   *   – content-visibility sur les sections hors-écran skip leur rendu initial
+   *
+   * INP (Interaction to Next Paint)
+   *   – will-change:opacity uniquement sur les éléments qui transitionnent (ads)
+   *   – Pas de layout thrashing : pas de lecture de propriétés géométriques
+   *     dans des handlers d'événements synchrones
+   */
+
+  html {
+    scroll-behavior: smooth;
+    /* Empêche les scrollbars d'apparaître/disparaître de créer un CLS */
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    @apply bg-[#F8FAFC] text-gray-800 antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1 {
+    @apply text-3xl sm:text-4xl font-bold text-gray-900 leading-tight;
+  }
+
+  h2 {
+    @apply text-2xl font-bold text-gray-900;
+  }
+
+  h3 {
+    @apply text-xl font-semibold text-gray-900;
+  }
+
+  /*
+   * Réserve de l'espace pour les images sans dimension explicite
+   * (évite le CLS si next/image n'est pas utilisé dans les articles MDX)
+   */
+  img:not([width]):not([height]) {
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    height: auto;
+  }
+
+  /* Empêche les liens de provoquer un repaint de toute la page */
+  a {
+    text-underline-offset: 3px;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white border border-gray-200 rounded-xl shadow-sm;
+  }
+
+  .metric-card {
+    @apply bg-gray-50 rounded-lg p-4;
+  }
+
+  .btn-primary {
+    @apply bg-primary-600 text-white font-medium px-5 py-2.5 rounded-lg hover:bg-primary-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+
+  .btn-outline {
+    @apply border border-primary-600 text-primary-600 font-medium px-5 py-2.5 rounded-lg hover:bg-primary-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+
+  /* Prose pour les articles MDX */
+  .prose h2 {
+    @apply text-xl font-bold text-gray-900 mt-8 mb-3;
+  }
+
+  .prose h3 {
+    @apply text-lg font-semibold text-gray-900 mt-6 mb-2;
+  }
+
+  .prose p {
+    @apply text-gray-700 leading-relaxed mb-4;
+  }
+
+  .prose ul {
+    @apply list-disc list-inside text-gray-700 mb-4 space-y-1;
+  }
+
+  .prose ol {
+    @apply list-decimal list-inside text-gray-700 mb-4 space-y-1;
+  }
+
+  .prose table {
+    @apply w-full border-collapse text-sm mb-6;
+  }
+
+  .prose th {
+    @apply bg-gray-50 border border-gray-200 px-3 py-2 text-left font-semibold text-gray-700;
+  }
+
+  .prose td {
+    @apply border border-gray-200 px-3 py-2 text-gray-700;
+  }
+
+  .prose a {
+    @apply text-primary-600 hover:underline;
+  }
+
+  .prose strong {
+    @apply font-semibold text-gray-900;
+  }
+
+  .prose blockquote {
+    @apply border-l-4 border-primary-300 pl-4 italic text-gray-600 my-4;
+  }
+
+  /* Tableaux générés par mdToHtml */
+  .prose .table-wrapper {
+    @apply overflow-x-auto my-6 rounded-xl border border-gray-200 shadow-sm;
+  }
+
+  .prose table {
+    @apply w-full border-collapse text-sm;
+  }
+
+  .prose th {
+    @apply bg-primary-50 border-b border-gray-200 px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap;
+  }
+
+  .prose td {
+    @apply border-b border-gray-100 px-4 py-3 text-gray-700 last-of-type:border-0;
+  }
+
+  .prose tr:last-child td {
+    @apply border-0;
+  }
+
+  .prose tr:nth-child(even) td {
+    @apply bg-gray-50/60;
+  }
+
+  /* Séparateur horizontal dans les articles */
+  .prose hr {
+    @apply border-gray-200 my-8;
+  }
+
+  /* Code inline */
+  .prose code {
+    @apply bg-gray-100 text-primary-700 text-[0.85em] px-1.5 py-0.5 rounded font-mono;
+  }
+
+  /* Listes ordonnées */
+  .prose ol {
+    @apply list-decimal list-inside text-gray-700 mb-4 space-y-1;
+  }
+
+  /*
+   * ─── content-visibility ───────────────────────────────────────────────────
+   *
+   * Indique au navigateur qu'il peut ignorer le rendu des sections hors-écran
+   * jusqu'à ce qu'elles soient proches du viewport.
+   * Gain LCP/TBT significatif sur les pages longues (outils, articles).
+   *
+   * contain-intrinsic-size : taille estimée pour que le scrollbar reste stable
+   * (évite un mini-CLS au moment où le contenu est rendu).
+   *
+   * Ne PAS appliquer sur :
+   *   – le header / hero (doit être rendu immédiatement pour le LCP)
+   *   – les éléments position:fixed (les pubs latérales)
+   */
+  .section-offscreen {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 400px;
+  }
+
+  /*
+   * ─── Skeletons / placeholders ─────────────────────────────────────────────
+   * Animation pulse optimisée GPU : on anime transform+opacity au lieu de
+   * background-position pour ne pas déclencher de layout.
+   */
+  @keyframes skeleton-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+
+  .skeleton {
+    @apply bg-gray-200 rounded;
+    animation: skeleton-pulse 1.8s ease-in-out infinite;
+    will-change: opacity;
+  }
+}

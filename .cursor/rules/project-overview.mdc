@@ -1,0 +1,30 @@
+---
+description: Contexte général de PrêtImmoPro — stack, palette, conventions globales
+alwaysApply: true
+---
+
+# PrêtImmoPro — Vue d'ensemble
+
+Site de simulateurs de crédit immobilier français, optimisé SEO + AdSense.
+
+## Stack
+- **Next.js 14** App Router + TypeScript strict
+- **Tailwind CSS v3** avec breakpoint custom `3xl: 1500px`
+- **Recharts** pour les graphiques
+- **gray-matter** pour les articles MDX
+- **next-sitemap** (lancé en `postbuild`)
+
+## Palette obligatoire
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `primary-600` | `#1B4F8C` | Boutons, accents bleus |
+| `accent-600` | `#0F6E56` | Indicateurs positifs |
+| `#E07B5A` | coral | Intérêts dans les graphiques |
+| `bg-[#F8FAFC]` | — | Fond de page |
+
+## Conventions
+- Réponse toujours en **français**
+- Cards : `bg-white border border-gray-200 rounded-xl shadow-sm`
+- Metric cards : `bg-gray-50 rounded-lg p-4`
+- Sliders : `accent-blue-700`
+- Ne jamais troncature le code — fichiers toujours complets et prêts à l'emploi

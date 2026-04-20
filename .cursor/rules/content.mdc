@@ -1,0 +1,46 @@
+---
+description: Conventions pour les articles MDX et les données métier (villes, taux)
+globs: content/**
+alwaysApply: false
+---
+
+# Contenu — Conventions
+
+## Ajouter un article MDX
+Créer `content/articles/mon-slug.mdx` avec ce frontmatter :
+```yaml
+---
+title: "Titre de l'article (H1)"
+description: "Description SEO 150-160 caractères"
+date: "2026-04-20"          # date de publication ISO
+lastModified: "2026-04-20"  # date de mise à jour ISO
+keywords:
+  - mot clé principal
+  - mot clé secondaire
+---
+```
+L'URL générée automatiquement : `/articles/mon-slug`
+
+## Longueur cible des articles
+- Articles guides : **1000–1200 mots** minimum
+- Inclure des tableaux pour les données chiffrées (barèmes, plafonds)
+- Terminer par un CTA vers le simulateur le plus pertinent
+
+## Ajouter une ville
+Dans `lib/cities.ts`, ajouter au tableau `CITIES` :
+```ts
+{
+  slug: 'montpellier',   // kebab-case, utilisé dans l'URL
+  nom: 'Montpellier',
+  departement: '34',
+  tauxMoyen: 3.52,       // taux moyen local sur 20 ans
+  prixM2: 3800,          // prix moyen au m²
+  nbCourtiers: 87,       // nombre estimé de courtiers locaux
+}
+```
+La page `/taux-immobilier/montpellier` est générée automatiquement.
+
+## Source des taux
+- Taux nationaux : `lib/rates.ts` → Banque de France API (ISR 24h)
+- Taux locaux : ajustement `tauxNational + (city.tauxMoyen - 3.45)`
+- Ne jamais hardcoder de taux dans les pages — toujours passer par `getLiveRates()`
