@@ -90,10 +90,24 @@ function mdToHtml(md: string): string {
     }
     if (line.trim() === '') { output.push(''); i++; continue }
     const paraLines: string[] = []
-    while (i < lines.length && lines[i].trim() !== '' && !/^[#>|\-*\d]/.test(lines[i]) && !/^---/.test(lines[i].trim())) {
+    while (
+      i < lines.length &&
+      lines[i].trim() !== '' &&
+      !/^#{1,6} /.test(lines[i]) &&
+      !/^>/.test(lines[i]) &&
+      !/^\|.+\|$/.test(lines[i].trim()) &&
+      !/^[-*] /.test(lines[i]) &&
+      !/^\d+\. /.test(lines[i]) &&
+      !/^---+$/.test(lines[i].trim())
+    ) {
       paraLines.push(lines[i]); i++
     }
-    if (paraLines.length) output.push(`<p>${inline(paraLines.join(' '))}</p>`)
+    if (paraLines.length) {
+      output.push(`<p>${inline(paraLines.join(' '))}</p>`)
+    } else {
+      // Ligne non reconnue par aucun handler : avance pour éviter une boucle infinie
+      i++
+    }
   }
   return output.join('\n')
 }

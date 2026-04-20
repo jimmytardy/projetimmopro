@@ -31,17 +31,6 @@ export const metadata: Metadata = {
   authors: [{ name: 'PrêtImmoPro' }],
   creator: 'PrêtImmoPro',
 
-  icons: {
-    icon:      [
-      { url: '/icon.svg', type: 'image/svg+xml' },
-    ],
-    shortcut:  '/icon.svg',
-    apple:     '/apple-icon',
-    other: [
-      { rel: 'mask-icon', url: '/icon.svg', color: '#1e3a8a' },
-    ],
-  },
-
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#1e3a8a' },
     { media: '(prefers-color-scheme: dark)',  color: '#1e3a8a' },
@@ -98,12 +87,18 @@ export default async function LocaleLayout({
         Les colonnes latérales n'apparaissent qu'à partir de 1600px (min-[1600px]).
       */}
       <div className="flex-1 flex min-w-0">
-        <div className="hidden min-[1600px]:flex w-40 flex-shrink-0 items-center justify-center py-8 pl-3">
-          <SidebarAd side="left" slot="sidebar_left" />
+        {/* Colonne gauche — s'étire sur toute la hauteur du contenu (align-self: stretch par défaut) */}
+        <div className="hidden min-[1600px]:block w-40 flex-shrink-0 pl-3">
+          {/* sticky : se centre dans la zone visible sous le header (64 px) sans jamais le chevaucher */}
+          <div className="sticky top-[max(84px,calc(50vh-268px))] flex justify-center">
+            <SidebarAd side="left" slot="sidebar_left" />
+          </div>
         </div>
         <main className="flex-1 min-w-0">{children}</main>
-        <div className="hidden min-[1600px]:flex w-40 flex-shrink-0 items-center justify-center py-8 pr-3">
-          <SidebarAd side="right" slot="sidebar_right" />
+        <div className="hidden min-[1600px]:block w-40 flex-shrink-0 pr-3">
+          <div className="sticky top-[max(84px,calc(50vh-268px))] flex justify-center">
+            <SidebarAd side="right" slot="sidebar_right" />
+          </div>
         </div>
       </div>
       <Footer />

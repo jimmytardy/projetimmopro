@@ -93,10 +93,18 @@ export default function Header() {
 
               {villesOpen && (
                 <div
-                  className="absolute top-full left-0 w-52 bg-white border border-gray-200 rounded-xl shadow-lg py-2 z-50"
+                  className="absolute top-full left-0 w-56 bg-white border border-gray-200 rounded-xl shadow-lg py-2 z-50"
                   onMouseEnter={() => setVillesOpen(true)}
                   onMouseLeave={() => setVillesOpen(false)}
                 >
+                  <Link
+                    href="/taux-immobilier"
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 transition-colors border-b border-gray-100 mb-1"
+                    onClick={() => setVillesOpen(false)}
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-primary-500" />
+                    Rechercher une ville…
+                  </Link>
                   {CITIES.map((city) => (
                     <Link
                       key={city.slug}
@@ -164,6 +172,14 @@ export default function Header() {
             <p className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider mt-2">
               {t('ratesByCity')}
             </p>
+            <Link
+              href="/taux-immobilier"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-primary-700 bg-primary-50 rounded-lg transition-colors"
+              onClick={() => setMenuOpen(false)}
+            >
+              <MapPin className="w-3.5 h-3.5" />
+              Rechercher une ville…
+            </Link>
             {CITIES.map((city) => (
               <Link
                 key={city.slug}

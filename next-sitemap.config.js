@@ -37,6 +37,9 @@ module.exports = {
     } else if (path === '/guides') {
       priority = 0.9
       changefreq = 'weekly'
+    } else if (['/mentions-legales', '/cgu', '/politique-confidentialite'].includes(path)) {
+      priority = 0.3
+      changefreq = 'yearly'
     } else if (path.includes('/articles/') || path === '/taux-endettement' || path === '/documents-dossier-pret' || path === '/ptz-2026') {
       priority = 0.8
       changefreq = 'monthly'
@@ -49,5 +52,5 @@ module.exports = {
       lastmod: new Date().toISOString(),
     }
   },
-  exclude: ['/mentions-legales', '/cgu', '/politique-confidentialite'],
+  exclude: [],
 }
