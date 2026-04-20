@@ -14,7 +14,9 @@ const SidebarAd = dynamic(
 )
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pretimmopro.fr'),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pretimmopro.fr'
+  ),
   title: {
     default: 'PrêtImmoPro — Simulateur de crédit immobilier gratuit',
     template: '%s | PrêtImmoPro',

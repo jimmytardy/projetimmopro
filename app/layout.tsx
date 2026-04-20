@@ -1,8 +1,18 @@
+import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import { Inter } from 'next/font/google'
 import Script from 'next/script'
 import { headers } from 'next/headers'
 import './globals.css'
+
+// Défini ici (layout racine) pour que TOUTES les pages — y compris les routes
+// générées statiquement (opengraph-image, apple-icon, etc.) — résolvent
+// correctement les URLs absolues des images Open Graph et Twitter.
+export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pretimmopro.fr'
+  ),
+}
 
 const inter = Inter({
   subsets: ['latin'],

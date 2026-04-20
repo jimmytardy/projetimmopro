@@ -18,16 +18,18 @@ export default function manifest(): MetadataRoute.Manifest {
     lang:             'fr',
     icons: [
       {
-        src:     '/icon.svg',
-        sizes:   'any',
-        type:    'image/svg+xml',
+        // Favicon 32×32 généré par app/icon.tsx
+        src:     '/icon',
+        sizes:   '32x32',
+        type:    'image/png',
         purpose: 'any',
       },
       {
+        // Apple Touch Icon 180×180 généré par app/apple-icon.tsx
         src:     '/apple-icon',
         sizes:   '180x180',
         type:    'image/png',
-        purpose: 'maskable',
+        purpose: 'any maskable',
       },
     ],
   }
