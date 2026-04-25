@@ -2,7 +2,8 @@
  * Données par département français (96 départements métropolitains + Corse).
  * Utilisées pour estimer le prix m² et la zone PTZ d'une ville non référencée.
  *
- * Sources : DVF 2023-2024, MeilleursAgents, Notaires de France.
+ * Détail par commune : agrégat interne des transactions DVF 2025. Moyennes départementales :
+ * références marché indicatives (MeilleursAgents, Notaires de France, etc.).
  * Les prix sont des moyennes départementales — la ville réelle peut varier de ±30 %.
  */
 

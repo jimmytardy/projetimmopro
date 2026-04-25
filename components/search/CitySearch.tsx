@@ -1,68 +1,50 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { useRouter } from '@/i18n/navigation'
 import { Search, MapPin, Loader2, X } from 'lucide-react'
 import { cityToSlug } from '@/lib/geocode'
+import { formatPostcodesForDisplay, searchCommunesForAutocomplete } from '@/lib/citySearch'
 
-interface Commune {
-  nom: string
-  code: string
-  departement: { code: string; nom: string }
-  codesPostaux?: string[]
-  population?: number
-}
-
-const GEO_API = 'https://geo.api.gouv.fr/communes'
-
-/** Retourne true si la saisie ressemble à un code postal (2–5 chiffres). */
-function isPostalCode(q: string): boolean {
-  return /^\d{2,5}$/.test(q.trim())
-}
-
-function formatPopulation(pop?: number): string {
-  if (!pop) return ''
-  if (pop >= 1_000_000) return `${(pop / 1_000_000).toFixed(1)}M hab.`
-  if (pop >= 1_000)    return `${Math.round(pop / 1_000)}k hab.`
-  return `${pop} hab.`
-}
-
-export default function CitySearch({ placeholder = 'Ville ou code postal (ex : Grenoble, 38000)' }: { placeholder?: string }) {
+export default function CitySearch() {
+  const t = useTranslations('citySearch')
   const router = useRouter()
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<Commune[]>([])
+  const [results, setResults] = useState<Awaited<ReturnType<typeof searchCommunesForAutocomplete>>>([])
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
-  const listRef = useRef<HTMLUListElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const formatPopulation = useCallback(
+    (pop?: number): string => {
+      if (!pop) return ''
+      if (pop >= 1_000_000) return t('popMillion', { n: (pop / 1_000_000).toFixed(1) })
+      if (pop >= 1_000) return t('popK', { n: String(Math.round(pop / 1000)) })
+      return t('popCount', { n: String(pop) })
+    },
+    [t]
+  )
+
   const fetchCommunes = useCallback(async (q: string) => {
-    if (q.length < 2) { setResults([]); setOpen(false); return }
+    const trimmed = q.trim()
+    if (trimmed.length < 2) {
+      setResults([])
+      setOpen(false)
+      return
+    }
 
     setLoading(true)
     try {
-      const url = new URL(GEO_API)
-      // Bascule sur la recherche par code postal si la saisie est numérique
-      if (isPostalCode(q)) {
-        url.searchParams.set('codePostal', q.trim())
-      } else {
-        url.searchParams.set('nom', q)
-      }
-      url.searchParams.set('fields', 'nom,code,departement,codesPostaux,population')
-      url.searchParams.set('format', 'json')
-      url.searchParams.set('boost', 'population')
-      url.searchParams.set('limit', '8')
-
-      const res = await fetch(url.toString(), { headers: { Accept: 'application/json' } })
-      if (!res.ok) return
-      const communes: Commune[] = await res.json()
+      const communes = await searchCommunesForAutocomplete(trimmed, 14)
       setResults(communes)
-      setOpen(communes.length > 0)
+      setOpen(trimmed.length >= 2)
       setActiveIndex(-1)
     } catch {
-      // Silencieux — le champ reste fonctionnel
+      setResults([])
+      setOpen(trimmed.length >= 2)
     } finally {
       setLoading(false)
     }
@@ -71,10 +53,12 @@ export default function CitySearch({ placeholder = 'Ville ou code postal (ex : G
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => fetchCommunes(query), 280)
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
   }, [query, fetchCommunes])
 
-  const goToCity = (commune: Commune) => {
+  const goToCity = (commune: (typeof results)[0]) => {
     const slug = cityToSlug(commune.nom)
     setOpen(false)
     setQuery('')
@@ -103,7 +87,6 @@ export default function CitySearch({ placeholder = 'Ville ou code postal (ex : G
     if (results.length > 0) goToCity(results[activeIndex >= 0 ? activeIndex : 0])
   }
 
-  // Fermer si clic en dehors
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (inputRef.current && !inputRef.current.closest('[data-city-search]')?.contains(e.target as Node)) {
@@ -113,6 +96,9 @@ export default function CitySearch({ placeholder = 'Ville ou code postal (ex : G
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  const trimmedQuery = query.trim()
+  const postcodeHighlight = /^\d{2,5}$/.test(trimmedQuery) ? trimmedQuery : undefined
 
   return (
     <div className="relative w-full" data-city-search>
@@ -125,10 +111,12 @@ export default function CitySearch({ placeholder = 'Ville ou code postal (ex : G
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            onFocus={() => results.length > 0 && setOpen(true)}
-            placeholder={placeholder}
+            onFocus={() => {
+              if (query.trim().length >= 2) setOpen(true)
+            }}
+            placeholder={t('placeholder')}
             autoComplete="off"
-            aria-label="Rechercher une ville"
+            aria-label={t('ariaSearch')}
             aria-autocomplete="list"
             aria-expanded={open}
             aria-controls="city-search-results"
@@ -140,9 +128,14 @@ export default function CitySearch({ placeholder = 'Ville ou code postal (ex : G
           {!loading && query && (
             <button
               type="button"
-              onClick={() => { setQuery(''); setResults([]); setOpen(false); inputRef.current?.focus() }}
+              onClick={() => {
+                setQuery('')
+                setResults([])
+                setOpen(false)
+                inputRef.current?.focus()
+              }}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              aria-label="Effacer"
+              aria-label={t('ariaClear')}
             >
               <X className="w-4 h-4" />
             </button>
@@ -153,14 +146,13 @@ export default function CitySearch({ placeholder = 'Ville ou code postal (ex : G
       {open && results.length > 0 && (
         <ul
           id="city-search-results"
-          ref={listRef}
           role="listbox"
-          aria-label="Suggestions de villes"
-          className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden"
+          aria-label={t('ariaSuggestions')}
+          className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden max-h-[min(70vh,24rem)] overflow-y-auto"
         >
           {results.map((commune, idx) => {
             const isActive = idx === activeIndex
-            const cp = commune.codesPostaux?.[0] ?? ''
+            const cpsLine = formatPostcodesForDisplay(commune.codesPostaux, postcodeHighlight)
             return (
               <li
                 key={commune.code}
@@ -177,15 +169,21 @@ export default function CitySearch({ placeholder = 'Ville ou code postal (ex : G
                   <span className={`font-medium text-sm ${isActive ? 'text-primary-700' : 'text-gray-900'}`}>
                     {commune.nom}
                   </span>
-                  <span className="text-xs text-gray-400 ml-2">
-                    {cp && `${cp} · `}{commune.departement?.nom} ({commune.departement?.code})
+                  <span className="text-xs text-gray-400 ml-2 block sm:inline sm:ml-2 mt-0.5 sm:mt-0">
+                    {cpsLine ? (
+                      <>
+                        <span className="text-gray-500">{cpsLine}</span>
+                        <span className="text-gray-300 mx-1">·</span>
+                      </>
+                    ) : null}
+                    <span>
+                      {commune.departement?.nom} ({commune.departement?.code})
+                    </span>
                   </span>
                 </div>
-                {commune.population && (
-                  <span className="text-xs text-gray-400 flex-shrink-0">
-                    {formatPopulation(commune.population)}
-                  </span>
-                )}
+                {commune.population ? (
+                  <span className="text-xs text-gray-400 flex-shrink-0">{formatPopulation(commune.population)}</span>
+                ) : null}
               </li>
             )
           })}
@@ -194,7 +192,7 @@ export default function CitySearch({ placeholder = 'Ville ou code postal (ex : G
 
       {open && !loading && results.length === 0 && query.length >= 2 && (
         <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-2xl shadow-xl px-4 py-6 text-center text-sm text-gray-400">
-          Aucune commune trouvée pour «&nbsp;{query}&nbsp;»
+          {t('noResults', { query })}
         </div>
       )}
     </div>

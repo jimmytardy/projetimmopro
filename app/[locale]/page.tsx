@@ -14,6 +14,7 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import JsonLd from '@/components/seo/JsonLd'
+import { absoluteUrlFromPath, alternatesForLogicalPath, pathnameForLocale } from '@/lib/seo-alternates'
 import RatesTable from '@/components/rates/RatesTable'
 import RatesTableSkeleton from '@/components/rates/RatesTableSkeleton'
 
@@ -26,9 +27,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const t = await getTranslations({ locale, namespace: 'home' })
   return {
-    title: t('metaTitle'),
+    // `home.metaTitle` contient déjà « | PrêtImmoPro » — éviter le double suffixe du template layout.
+    title: { absolute: t('metaTitle') },
     description: t('metaDescription'),
-    alternates: { canonical: '/' },
+    alternates: alternatesForLogicalPath('/', locale),
   }
 }
 
@@ -83,9 +85,9 @@ export default async function HomePage({
     <>
       <JsonLd
         type="WebApplication"
-        name="PrêtImmoPro — Simulateur de crédit immobilier"
-        description="Simulateurs gratuits de prêt immobilier : mensualités, capacité d'emprunt, frais de notaire"
-        url="https://pretimmopro.fr"
+        name={t('metaTitle')}
+        description={t('metaDescription')}
+        url={absoluteUrlFromPath(pathnameForLocale('/', locale))}
       />
 
       {/* ── HERO ── */}

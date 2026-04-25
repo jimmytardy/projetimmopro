@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { alternatesForLogicalPath } from '@/lib/seo-alternates'
 import { notFound } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import fs from 'fs'
@@ -51,7 +52,13 @@ function mdToHtml(md: string): string {
       .replace(/`(.+?)`/g, '<code>$1</code>')
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.+?)\*/g, '<em>$1</em>')
-      .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>')
+      .replace(/\[(.+?)\]\((.+?)\)/g, (_m, text: string, href: string) => {
+        const ext = /^https?:\/\//i.test(href)
+        if (ext) {
+          return `<a href="${href}" target="_blank" rel="noopener noreferrer">${text}</a>`
+        }
+        return `<a href="${href}">${text}</a>`
+      })
 
   while (i < lines.length) {
     const line = lines[i]
@@ -118,7 +125,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({
-  params: { slug },
+  params: { slug, locale },
 }: {
   params: { slug: string; locale: string }
 }): Promise<Metadata> {
@@ -128,7 +135,7 @@ export async function generateMetadata({
     title: data.frontmatter.title,
     description: data.frontmatter.description,
     keywords: data.frontmatter.keywords,
-    alternates: { canonical: `/articles/${slug}` },
+    alternates: alternatesForLogicalPath(`/articles/${slug}`, locale),
     openGraph: {
       type: 'article',
       title: data.frontmatter.title,

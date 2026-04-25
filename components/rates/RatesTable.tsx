@@ -1,5 +1,5 @@
 /**
- * Server Component — s'exécute côté serveur avec cache ISR 24h.
+ * Server Component — tableau des taux (référence statique intégrée, sans API).
  */
 import { getLiveRates, sourceLabel, formatTaux } from '@/lib/rates'
 import { calculerMensualite } from '@/lib/calculators'
@@ -9,26 +9,10 @@ import { getTranslations, getLocale } from 'next-intl/server'
 const DUREES = [10, 15, 20, 25] as const
 const CAPITAL_EXEMPLE = 150_000
 
-function formatDate(iso: string, locale: string): string {
-  if (iso.length === 7) {
-    const [year, month] = iso.split('-')
-    return new Date(Number(year), Number(month) - 1, 1).toLocaleDateString(
-      locale === 'en' ? 'en-GB' : 'fr-FR',
-      { month: 'long', year: 'numeric' }
-    )
-  }
-  return new Date(iso).toLocaleDateString(locale === 'en' ? 'en-GB' : 'fr-FR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-}
-
 export default async function RatesTable() {
   const locale = await getLocale()
   const t = await getTranslations({ locale, namespace: 'ratesTable' })
   const rates = await getLiveRates()
-  const isLive = rates.source !== 'static_fallback'
 
   const formatEur = (v: number) =>
     new Intl.NumberFormat(locale === 'en' ? 'en-GB' : 'fr-FR', {
@@ -41,36 +25,12 @@ export default async function RatesTable() {
     <div>
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <div className="flex items-center gap-2">
-          <span
-            className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
-              isLive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-            }`}
-          >
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-500">
             <RefreshCw className="w-3 h-3" />
-            {isLive ? t('liveData') : t('indicativeData')}
+            {t('indicativeData')}
           </span>
-
-          {rates.source === 'banque_de_france' && (
-            <span className="text-xs text-gray-500">
-              {t('source')} : <strong>{t('sourceBDF')}</strong> —{' '}
-              {formatDate(rates.dateObservation, locale)}
-            </span>
-          )}
-          {rates.source === 'ecb' && (
-            <span className="text-xs text-gray-500">
-              {t('sourceECB', { rate: formatTaux(rates.euribor3m!) })}
-            </span>
-          )}
-          {rates.source === 'static_fallback' && (
-            <span className="text-xs text-gray-400">{t('sourceStatic')}</span>
-          )}
+          <span className="text-xs text-gray-400">{t('sourceStatic')}</span>
         </div>
-
-        {rates.euribor3m !== null && (
-          <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium">
-            Euribor 3M : {formatTaux(rates.euribor3m)}
-          </span>
-        )}
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-gray-200">

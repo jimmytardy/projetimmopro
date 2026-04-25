@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import dynamic from 'next/dynamic'
 import { NextIntlClientProvider } from 'next-intl'
-import { getMessages, setRequestLocale } from 'next-intl/server'
+import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
@@ -13,48 +13,69 @@ const SidebarAd = dynamic(
   { ssr: false }
 )
 
-export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pretimmopro.fr'
-  ),
-  title: {
-    default: 'PrêtImmoPro — Simulateur de crédit immobilier gratuit',
-    template: '%s | PrêtImmoPro',
-  },
-  description:
-    'Simulez votre prêt immobilier gratuitement : mensualités, capacité d\'emprunt, frais de notaire et taux immobiliers par ville. Outils 100% gratuits, sans inscription.',
-  keywords: [
-    'simulateur prêt immobilier',
-    'calculette crédit immobilier',
-    'capacité emprunt',
-    'frais notaire',
-    'taux immobilier 2026',
-  ],
-  authors: [{ name: 'PrêtImmoPro' }],
-  creator: 'PrêtImmoPro',
+const LAYOUT_KEYWORDS_FR = [
+  'simulateur prêt immobilier',
+  'calculette crédit immobilier',
+  'capacité emprunt',
+  'frais notaire',
+  'taux immobilier 2026',
+]
 
-  openGraph: {
-    type:        'website',
-    locale:      'fr_FR',
-    siteName:    'PrêtImmoPro',
-    title:       'PrêtImmoPro — Simulateur de crédit immobilier gratuit',
-    description: 'Simulez votre prêt immobilier gratuitement en 30 secondes.',
-    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'PrêtImmoPro' }],
-  },
-  twitter: {
-    card:        'summary_large_image',
-    title:       'PrêtImmoPro — Simulateur de crédit immobilier gratuit',
-    description: 'Simulez votre prêt immobilier gratuitement en 30 secondes.',
-    images:      ['/opengraph-image'],
-  },
-  robots: {
-    index:  true,
-    follow: true,
-    googleBot: {
-      index:  true,
-      follow: true,
+const LAYOUT_KEYWORDS_EN = [
+  'mortgage simulator France',
+  'French mortgage calculator',
+  'borrowing capacity',
+  'notary fees',
+  'mortgage rates 2026',
+]
+
+export async function generateMetadata({
+  params: { locale },
+}: {
+  params: { locale: string }
+}): Promise<Metadata> {
+  const t = await getTranslations({ locale, namespace: 'home' })
+  const isEn = locale === 'en'
+  const ogLocale = isEn ? 'en_GB' : 'fr_FR'
+  const titleDefault = t('metaTitle')
+  const description = t('metaDescription')
+
+  return {
+    metadataBase: new URL(
+      process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pretimmopro.fr'
+    ),
+    title: {
+      default: titleDefault,
+      template: '%s | PrêtImmoPro',
     },
-  },
+    description,
+    keywords: isEn ? LAYOUT_KEYWORDS_EN : LAYOUT_KEYWORDS_FR,
+    authors: [{ name: 'PrêtImmoPro' }],
+    creator: 'PrêtImmoPro',
+
+    openGraph: {
+      type: 'website',
+      locale: ogLocale,
+      siteName: 'PrêtImmoPro',
+      title: titleDefault,
+      description,
+      images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'PrêtImmoPro' }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: titleDefault,
+      description,
+      images: ['/opengraph-image'],
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+      },
+    },
+  }
 }
 
 export const viewport: Viewport = {

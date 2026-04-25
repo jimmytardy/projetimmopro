@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { alternatesForLogicalPath } from '@/lib/seo-alternates'
 import dynamic from 'next/dynamic'
 import Breadcrumb from '@/components/seo/Breadcrumb'
 import JsonLd from '@/components/seo/JsonLd'
@@ -16,7 +17,7 @@ export async function generateMetadata({
   return {
     title: t('pageTitle'),
     description: t('pageDesc'),
-    alternates: { canonical: '/frais-notaire' },
+    alternates: alternatesForLogicalPath('/frais-notaire', locale),
   }
 }
 

@@ -1,4 +1,5 @@
-import Link from 'next/link'
+import { getLocale, getTranslations } from 'next-intl/server'
+import { Link } from '@/i18n/navigation'
 import JsonLd from './JsonLd'
 
 interface BreadcrumbItem {
@@ -10,8 +11,10 @@ interface BreadcrumbProps {
   items: BreadcrumbItem[]
 }
 
-export default function Breadcrumb({ items }: BreadcrumbProps) {
+export default async function Breadcrumb({ items }: BreadcrumbProps) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pretimmopro.fr'
+  const locale = await getLocale()
+  const t = await getTranslations({ locale, namespace: 'breadcrumb' })
 
   return (
     <>
@@ -22,7 +25,7 @@ export default function Breadcrumb({ items }: BreadcrumbProps) {
           url: `${siteUrl}${item.href}`,
         }))}
       />
-      <nav aria-label="Fil d'Ariane" className="mb-4">
+      <nav aria-label={t('ariaLabel')} className="mb-4">
         <ol className="flex flex-wrap items-center gap-1 text-sm text-gray-500">
           {items.map((item, index) => (
             <li key={item.href} className="flex items-center gap-1">

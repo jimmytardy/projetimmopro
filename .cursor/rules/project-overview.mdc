@@ -12,7 +12,7 @@ Site de simulateurs de crédit immobilier français, optimisé SEO + AdSense.
 - **Tailwind CSS v3** avec breakpoint custom `3xl: 1500px`
 - **Recharts** pour les graphiques
 - **gray-matter** pour les articles MDX
-- **next-sitemap** (lancé en `postbuild`)
+- **Sitemap / robots** : `app/sitemap.ts` + `app/robots.ts` (Next.js metadata routes)
 
 ## Palette obligatoire
 | Token | Hex | Usage |

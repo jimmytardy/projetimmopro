@@ -1,7 +1,6 @@
 /**
- * Server Component — fetch live rates + badge + grille taux + tableau.
- * Isolé pour être enveloppé dans <Suspense> dans VillePage :
- * le reste de la page s'affiche immédiatement pendant que ce bloc charge.
+ * Server Component — taux indicatifs (référence intégrée) + grille + tableau.
+ * Prix m² et courtiers : agrégat DVF interne si disponible, sinon données villes.ts.
  */
 import { getLiveRates, formatTaux, sourceLabel } from '@/lib/rates'
 import { getCityStats } from '@/lib/cityStats'
@@ -35,6 +34,8 @@ interface Labels {
   indicativeData: string
   duration: string
   ratesByDuration: string
+  yearsShort: string
+  m2DvfBadgeLine: string
 }
 
 export default async function VilleRatesSection({
@@ -51,17 +52,19 @@ export default async function VilleRatesSection({
     getCityStats(city),
   ])
   const tauxVille20 = getTauxPourVille(liveRates.parDuree[20], city.tauxMoyen)
-  const isLive = liveRates.source !== 'static_fallback'
   const numLocale = locale === 'en' ? 'en-GB' : 'fr-FR'
+  const showJsonPrix = cityStats.prixFromCityPricesJson
 
   return (
     <>
-      {/* Badge source live / indicatif */}
-      <div className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full mb-6 bg-green-100 text-green-700">
+      <div className="inline-flex flex-wrap items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full mb-6 bg-gray-100 text-gray-600">
         <RefreshCw className="w-3 h-3" />
-        {isLive
-          ? `${labels.liveData} · ${sourceLabel(liveRates.source)}`
-          : labels.indicativeData}
+        <span>{labels.indicativeData} · {sourceLabel(liveRates.source)}</span>
+        {showJsonPrix && (
+          <span className="text-emerald-700 font-semibold">
+            {labels.m2DvfBadgeLine}
+          </span>
+        )}
       </div>
 
       {/* Grille des 4 cartes stat */}
@@ -105,7 +108,7 @@ export default async function VilleRatesSection({
               return (
                 <tr key={duree} className={`border-b border-gray-100 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                   <td className="px-4 py-3 font-medium text-gray-900">
-                    {duree} {locale === 'en' ? 'yrs' : 'ans'}
+                    {duree} {labels.yearsShort}
                   </td>
                   <td className="px-4 py-3 text-center font-bold text-primary-600">{formatTaux(taux)}</td>
                   <td className="px-4 py-3 text-center text-accent-600">{formatTaux(Math.round((taux - 0.4) * 100) / 100)}</td>

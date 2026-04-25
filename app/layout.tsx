@@ -30,6 +30,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
   return (
     <html lang={locale} className={inter.variable}>
+      <head>
+        {/* Précharge l’agrégat prix (fichier interne) en arrière-plan dès le premier chargement.
+            Le navigateur le met en cache HTTP — les pages de villes n'ont plus
+            besoin de l'appel réseau si elles consomment ce fichier côté client.
+            Côté serveur, le cache module-level de lib/cityPrices.ts suffit. */}
+        <link rel="prefetch" href="/city-prices.json" as="fetch" crossOrigin="anonymous" />
+      </head>
       <body className={`${inter.variable} font-sans min-h-screen flex flex-col`}>
         {/*
           Script AdSense — injecté dans le <head> par Next.js automatiquement.

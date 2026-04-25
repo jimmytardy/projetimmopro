@@ -105,20 +105,11 @@ Emplacements prévus :
 ```
 pretimmopro/
 ├── app/
-│   ├── layout.tsx              # Layout global avec Header/Footer
-│   ├── page.tsx                # Homepage
-│   ├── globals.css             # Styles globaux + classes utilitaires
-│   ├── loading.tsx             # Skeleton loader global
-│   ├── (outils)/               # Groupe de routes — pages outils
-│   │   ├── simulateur-pret/
-│   │   ├── capacite-emprunt/
-│   │   ├── frais-notaire/
-│   │   ├── remboursement-anticipe/
-│   │   └── taux-fixe-vs-variable/
-│   ├── (articles)/             # Groupe de routes — articles MDX
-│   │   └── [slug]/page.tsx
-│   └── taux-immobilier/
-│       └── [ville]/page.tsx    # Pages locales (8 villes)
+│   ├── layout.tsx              # Layout racine (metadataBase, HTML)
+│   ├── globals.css
+│   ├── sitemap.ts              # Sitemap XML (FR + EN)
+│   ├── robots.ts               # robots.txt dynamique
+│   └── [locale]/               # Routes next-intl (outils, articles, villes…)
 ├── components/
 │   ├── ads/AdUnit.tsx          # Composant AdSense réutilisable
 │   ├── layout/
@@ -136,16 +127,16 @@ pretimmopro/
 │       └── TableauAmortissement.tsx
 ├── lib/
 │   ├── calculators.ts          # Fonctions financières pures
-│   └── cities.ts               # Données des 8 villes
+│   ├── cities.ts               # Données des 8 villes
+│   ├── seo-alternates.ts       # Canonical + hreflang FR/EN
+│   └── sitemap-build.ts        # Liste des URLs pour app/sitemap.ts
 ├── content/
 │   └── articles/               # Articles MDX
 │       ├── taux-endettement.mdx
 │       ├── documents-dossier-pret.mdx
 │       └── ptz-2026.mdx
 ├── public/
-│   └── robots.txt
 ├── next.config.js
-├── next-sitemap.config.js
 ├── tailwind.config.ts
 └── .env.local
 ```

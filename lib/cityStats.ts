@@ -1,15 +1,12 @@
 /**
- * Récupération dynamique du prix au m² et du nombre de courtiers par ville.
+ * Statistiques ville : uniquement données locales, sans appel réseau.
  *
- * Sources :
- *  1. API DV3F CEREMA       — prix médian au m² par commune (données DVF officielles)
- *  2. API Recherche Entreprises (data.gouv.fr) — nombre d'établissements actifs APE 6619B par département
- *
- * Stratégie :
- *  - Cache Next.js ISR : revalidation toutes les 30 jours (revalidate: 2592000).
- *  - Timeout strict de 5 secondes par appel.
- *  - En cas d'erreur ou de timeout, retour aux valeurs statiques de fallback.
+ * Prix au m² : agrégat interne (médianes DVF du millésime source, ex. 2025 ; sinon cities.ts).
+ * Courtiers : valeurs déclaratives dans **cities.ts** (plus d’API).
  */
+
+import type { PtzZone } from './departmentData'
+import { getCityPrice, getCityPrixM2 } from './cityPrices'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,101 +20,87 @@ export interface CityStatsInput {
 export interface CityStats {
   prixM2: number
   nbCourtiers: number
-  source: 'api' | 'static_fallback'
+  /** true si le prix m² affiché provient de l’agrégat DVF interne */
+  prixFromCityPricesJson: boolean
   fetchedAt: string
 }
 
-// ─── Constantes ───────────────────────────────────────────────────────────────
+export type PrixDetailSource = 'city_prices' | 'dept_estime'
 
-const CACHE_REVALIDATE = 2592000 // 30 jours en secondes
-const FETCH_TIMEOUT_MS = 5000
-
-// ─── Timeout helper ───────────────────────────────────────────────────────────
-
-async function fetchWithTimeout(url: string): Promise<Response> {
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
-  try {
-    return await fetch(url, {
-      headers: { Accept: 'application/json' },
-      next: { revalidate: CACHE_REVALIDATE },
-      signal: controller.signal,
-    })
-  } finally {
-    clearTimeout(timer)
-  }
+export interface PrixDetail {
+  aptAncien: number
+  maisonAncienne: number
+  aptNeuf: number
+  maisonNeuve: number
+  /** true = agrégat DVF interne, false = estimation à partir du prix départemental (cities) */
+  sourceApi: boolean
+  detailSource: PrixDetailSource
+  localMeta?: { nb: number; cps?: string[] }
+  aptNeufFromFile?: boolean
+  maisonNeufFromFile?: boolean
 }
 
-// ─── Prix m² — API DV3F CEREMA ────────────────────────────────────────────────
-
-/**
- * Retourne le prix médian au m² (appartements) pour une commune donnée.
- * Doc : https://apidf-preprod.cerema.fr/swagger/
- */
-async function fetchPrixM2(codeInsee: string): Promise<number | null> {
-  try {
-    const url = `https://apidf-preprod.cerema.fr/indicateurs/dv3f/communes/${codeInsee}/`
-    const res = await fetchWithTimeout(url)
-    if (!res.ok) return null
-    const json = await res.json()
-    // Priorité : appartements (apt), sinon tous types confondus
-    const prixApt = json?.prixm2_median_apt ?? json?.prixm2_median ?? null
-    if (prixApt == null) return null
-    return Math.round(Number(prixApt))
-  } catch {
-    return null
-  }
+const NEUF_COEFFICIENT: Record<PtzZone, number> = {
+  Abis: 1.12,
+  A:    1.16,
+  B1:   1.21,
+  B2:   1.24,
+  C:    1.27,
 }
 
-// ─── Courtiers — API Recherche Entreprises data.gouv.fr ───────────────────────
-
 /**
- * Retourne le nombre d'établissements actifs avec le code APE 6619B
- * (courtiers en opérations de banque) dans un département donné.
- * Doc : https://recherche-entreprises.api.gouv.fr/docs/
+ * Détail des prix m² : agrégat DVF interne si la commune est couverte, sinon estimation
+ * à partir du prix m² de référence (cities / département).
  */
-async function fetchNbCourtiers(departement: string): Promise<number | null> {
-  try {
-    const url = `https://recherche-entreprises.api.gouv.fr/search?activite_principale=6619B&departement=${departement}&per_page=1`
-    const res = await fetchWithTimeout(url)
-    if (!res.ok) return null
-    const json = await res.json()
-    const total = json?.total_results ?? null
-    if (total == null) return null
-    return Number(total)
-  } catch {
-    return null
+export async function fetchPrixDetail(
+  codeInsee: string,
+  prixFallback: number,
+  ptzZone: PtzZone,
+): Promise<PrixDetail> {
+  const coef = NEUF_COEFFICIENT[ptzZone]
+
+  const local = getCityPrice(codeInsee)
+  if (local && (local.med_apt_anc != null || local.med_mai_anc != null)) {
+    const aptAncien      = local.med_apt_anc ?? Math.round((local.med_mai_anc ?? prixFallback) / 1.18)
+    const maisonAncienne = local.med_mai_anc ?? Math.round(aptAncien * 1.18)
+    return {
+      aptAncien,
+      maisonAncienne,
+      aptNeuf:     local.med_apt_neuf ?? Math.round(aptAncien * coef),
+      maisonNeuve: local.med_mai_neuf ?? Math.round(maisonAncienne * coef),
+      sourceApi: true,
+      detailSource: 'city_prices',
+      localMeta: {
+        nb:  local.nb,
+        cps: local.cps?.length ? local.cps : undefined,
+      },
+      aptNeufFromFile:     local.med_apt_neuf != null,
+      maisonNeufFromFile:  local.med_mai_neuf != null,
+    }
   }
-}
 
-// ─── Fonction principale exportée ────────────────────────────────────────────
-
-/**
- * Retourne les statistiques dynamiques pour une ville.
- * Appels en parallèle avec fallback sur les valeurs statiques de cities.ts.
- */
-export async function getCityStats(city: CityStatsInput): Promise<CityStats> {
-  const [prixM2Result, nbCourtiersResult] = await Promise.allSettled([
-    fetchPrixM2(city.codeInsee),
-    fetchNbCourtiers(city.departement),
-  ])
-
-  const prixM2Live =
-    prixM2Result.status === 'fulfilled' && prixM2Result.value !== null
-      ? prixM2Result.value
-      : null
-
-  const nbCourtiersLive =
-    nbCourtiersResult.status === 'fulfilled' && nbCourtiersResult.value !== null
-      ? nbCourtiersResult.value
-      : null
-
-  const isLive = prixM2Live !== null || nbCourtiersLive !== null
+  const aptAncien      = Math.round(prixFallback * 0.92)
+  const maisonAncienne = Math.round(prixFallback * 1.18)
 
   return {
-    prixM2:      prixM2Live      ?? city.prixM2,
-    nbCourtiers: nbCourtiersLive ?? city.nbCourtiers,
-    source:      isLive ? 'api' : 'static_fallback',
-    fetchedAt:   new Date().toISOString(),
+    aptAncien,
+    maisonAncienne,
+    aptNeuf:     Math.round(aptAncien * coef),
+    maisonNeuve: Math.round(maisonAncienne * coef),
+    sourceApi: false,
+    detailSource: 'dept_estime',
+  }
+}
+
+/**
+ * Cartes ville (prix m², courtiers) : JSON local pour le prix, **cities.ts** pour les courtiers.
+ */
+export async function getCityStats(city: CityStatsInput): Promise<CityStats> {
+  const fromJson = getCityPrixM2(city.codeInsee)
+  return {
+    prixM2:                 fromJson ?? city.prixM2,
+    nbCourtiers:            city.nbCourtiers,
+    prixFromCityPricesJson: fromJson !== null,
+    fetchedAt:              new Date().toISOString(),
   }
 }

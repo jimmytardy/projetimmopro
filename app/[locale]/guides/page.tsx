@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { alternatesForLogicalPath } from '@/lib/seo-alternates'
 import { Link } from '@/i18n/navigation'
 import fs from 'fs'
 import path from 'path'
@@ -20,7 +21,7 @@ export async function generateMetadata({
   return {
     title: t('pageTitle'),
     description: t('metaDescription'),
-    alternates: { canonical: '/guides' },
+    alternates: alternatesForLogicalPath('/guides', locale),
   }
 }
 

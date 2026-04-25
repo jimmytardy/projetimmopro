@@ -1,68 +1,45 @@
 import { ImageResponse } from 'next/og'
 
-export const runtime     = 'edge'
 export const size        = { width: 180, height: 180 }
 export const contentType = 'image/png'
 
 /**
- * Apple Touch Icon 180×180 — généré via Next.js ImageResponse (Satori).
- * Reproduit le logo PrêtImmoPro : fond bleu dégradé, maison blanche avec %.
- *
- * Satori ne supporte pas les éléments SVG natifs : on utilise la technique
- * CSS "border trick" pour le triangle du toit.
+ * Apple Touch Icon 180×180 PNG — SVG du Logo embarqué en data URI dans ImageResponse.
+ * Rendu pixel-perfect identique au composant Logo.tsx.
  */
 export default function AppleIcon() {
+  const s = 180
+  const r = Math.round(s * 0.2)
+  const cx = s / 2
+  const roofTop   = s * 0.10
+  const roofMid   = s * 0.52
+  const roofLeft  = s * 0.08
+  const roofRight = s * 0.92
+  const bodyLeft  = s * 0.18
+  const bodyRight = s * 0.82
+  const bodyBottom= s * 0.92
+  const percentY  = bodyBottom - (bodyBottom - roofMid) * 0.18
+  const fontSize  = s * 0.32
+
+  const svg = `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#1e3a8a"/>
+        <stop offset="100%" stop-color="#2563eb"/>
+      </linearGradient>
+    </defs>
+    <rect width="${s}" height="${s}" rx="${r}" ry="${r}" fill="url(#g)"/>
+    <polygon points="${cx},${roofTop} ${roofRight},${roofMid} ${roofLeft},${roofMid}" fill="rgba(255,255,255,0.97)"/>
+    <rect x="${bodyLeft}" y="${roofMid - 1}" width="${bodyRight - bodyLeft}" height="${bodyBottom - roofMid + 1}" rx="${s * 0.03}" fill="rgba(255,255,255,0.97)"/>
+    <text x="${cx}" y="${percentY}" text-anchor="middle" dominant-baseline="auto" font-size="${fontSize}" font-weight="900" font-family="Arial Black, Arial, sans-serif" fill="#1e3a8a">%</text>
+  </svg>`
+
+  const dataUri = `data:image/svg+xml,${encodeURIComponent(svg)}`
+
   return new ImageResponse(
     (
-      <div
-        style={{
-          background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
-          width:        180,
-          height:       180,
-          borderRadius: 36,
-          display:      'flex',
-          flexDirection: 'column',
-          alignItems:   'center',
-          justifyContent: 'center',
-          gap:          0,
-        }}
-      >
-        {/* Toit — triangle CSS */}
-        <div
-          style={{
-            width:        0,
-            height:       0,
-            borderLeft:   '62px solid transparent',
-            borderRight:  '62px solid transparent',
-            borderBottom: '56px solid rgba(255,255,255,0.97)',
-            marginBottom: -2,
-          }}
-        />
-
-        {/* Corps de la maison */}
-        <div
-          style={{
-            width:           100,
-            height:          72,
-            background:      'rgba(255,255,255,0.97)',
-            borderRadius:    4,
-            display:         'flex',
-            alignItems:      'center',
-            justifyContent:  'center',
-          }}
-        >
-          <span
-            style={{
-              fontSize:   46,
-              fontWeight: 900,
-              color:      '#1e3a8a',
-              lineHeight: 1,
-            }}
-          >
-            %
-          </span>
-        </div>
-      </div>
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={dataUri} width={s} height={s} alt="" />
     ),
     { ...size },
   )

@@ -1,17 +1,20 @@
 ---
-description: SEO technique — metadata, JSON-LD, sitemap, pages locales
-globs: app/**/page.tsx
+description: SEO technique — metadata, JSON-LD, sitemap, pages locales, qualité des textes et vocabulaire varié
+globs: app/**/page.tsx,content/articles/**/*.mdx,messages/*.json
 alwaysApply: false
 ---
 
 # SEO — Conventions
 
 ## Metadata obligatoire sur chaque page
+Utiliser `alternatesForLogicalPath('/chemin-logique', locale)` depuis `@/lib/seo-alternates` (canonical + `hreflang` fr/en + `x-default`), pas seulement `canonical` nu.
+
 ```tsx
-export const metadata: Metadata = {
+// generateMetadata
+return {
   title: 'Titre unique 50-60 chars | PrêtImmoPro',
   description: 'Description 150-160 chars avec mots-clés naturels.',
-  alternates: { canonical: '/chemin-de-la-page' },
+  alternates: alternatesForLogicalPath('/simulateur-pret', locale),
   keywords: ['mot clé 1', 'mot clé 2'],
 }
 ```
@@ -45,13 +48,19 @@ const rates = await getLiveRates() // cache ISR 24h automatique
 - Schema `LocalBusiness` JSON-LD inline
 - Taux ajusté localement : `getTauxPourVille(tauxNational, duree, city.tauxMoyen)`
 
+## Qualité des textes & vocabulaire (pages, MDX, i18n)
+
+- **Clarté** : une idée par paragraphe ; éviter les phrases trop longues ou le jargon non expliqué.
+- **Vocabulaire varié** : ne pas répéter la même accroche ou les mêmes adjectifs sur plusieurs pages ; enrichir avec des **synonymes et formulations naturelles** (champ lexical prêt immo, logement, banque, assurance, fiscalité) sans bourrage de mots-clés.
+- **Cohérence** : aligner terminologie et promesses entre `messages/*.json`, contenu MDX et titres/meta.
+- **Signaux de faible qualité** à corriger : duplications entre meta/H1/intro, contenu trop générique, superlatifs vides, incohérences FR/EN.
+
 ## Articles MDX
 - Frontmatter requis : `title`, `description`, `date`, `lastModified`, `keywords[]`
 - Fichiers dans `content/articles/[slug].mdx`
 - URL automatique : `/articles/[slug]`
 
-## Sitemap (next-sitemap)
-Priorités dans `next-sitemap.config.js` :
-- Pages outils → `1.0`
-- Articles → `0.8`
-- Pages locales → `0.7`
+## Sitemap & robots (Next natif)
+- `app/sitemap.ts` : toutes les URLs FR + EN (priorités dans `lib/sitemap-build.ts`).
+- `app/robots.ts` : `allow` / `disallow` + lien vers `/sitemap.xml`.
+- Ne pas remettre de `sitemap.xml` / `robots.txt` statiques dans `public/` (ils écraseraient les routes metadata).

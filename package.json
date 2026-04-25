@@ -7,7 +7,7 @@
     "build": "dotenv -e .env.local -- next build",
     "start": "dotenv -e .env.local -- next start",
     "lint": "next lint",
-    "postbuild": "next-sitemap"
+    "generate-prices": "node scripts/generate-city-prices.mjs"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",
@@ -18,7 +18,6 @@
     "lucide-react": "^0.460.0",
     "next": "14.2.18",
     "next-intl": "^3.26.3",
-    "next-sitemap": "^4.2.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^2.13.3"

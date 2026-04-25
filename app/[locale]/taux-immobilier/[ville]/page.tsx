@@ -1,23 +1,25 @@
 import type { Metadata } from 'next'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { alternatesForLogicalPath } from '@/lib/seo-alternates'
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 import dynamic from 'next/dynamic'
 import { Info, ArrowRight } from 'lucide-react'
 import { CITIES, getCityBySlug } from '@/lib/cities'
 import { fetchCityBySlug, type DynamicCity } from '@/lib/geocode'
-import { setRequestLocale } from 'next-intl/server'
-import { PTZ_ZONE_LABELS } from '@/lib/departmentData'
+import { PTZ_ZONE_LABELS, getDepartmentData } from '@/lib/departmentData'
+import type { PtzZone } from '@/lib/departmentData'
 import { Link } from '@/i18n/navigation'
 import Breadcrumb from '@/components/seo/Breadcrumb'
 import JsonLd from '@/components/seo/JsonLd'
 import VilleRatesSection from '@/components/rates/VilleRatesSection'
 import VilleRatesSkeleton from '@/components/rates/VilleRatesSkeleton'
+import VillePrixSection from '@/components/rates/VillePrixSection'
+import VillePrixSkeleton from '@/components/rates/VillePrixSkeleton'
 
 const AdUnit = dynamic(() => import('@/components/ads/AdUnit'), { ssr: false })
 const SimulateurPret = dynamic(() => import('@/components/simulators/SimulateurPret'), { ssr: false })
 
-// Pré-génère les 8 villes statiques. Les autres sont rendues à la demande (dynamicParams = true par défaut).
 export function generateStaticParams() {
   return ['fr', 'en'].flatMap((locale) =>
     CITIES.map((city) => ({ locale, ville: city.slug }))
@@ -40,10 +42,17 @@ export async function generateMetadata({
   const city = await resolveCity(params.ville)
   if (!city) return {}
   const isDynamic = 'isDynamic' in city && city.isDynamic
+  const t = await getTranslations({ locale: params.locale, namespace: 'ville' })
+  const numLocale = params.locale === 'en' ? 'en-GB' : 'fr-FR'
+  const prix = city.prixM2.toLocaleString(numLocale)
   return {
-    title: `Taux immobilier à ${city.nom} en 2026 — Simulateur prêt`,
-    description: `Taux immobiliers ${isDynamic ? 'estimés' : 'moyens'} à ${city.nom} en 2026 : ${city.tauxMoyen} % sur 20 ans. Prix au m² ${city.prixM2.toLocaleString('fr-FR')} €. Simulez votre prêt immobilier à ${city.nom}.`,
-    alternates: { canonical: `/taux-immobilier/${city.slug}` },
+    title: t('metaTitle', { city: city.nom }),
+    description: t(isDynamic ? 'metaDescDynamic' : 'metaDescStatic', {
+      city: city.nom,
+      taux: city.tauxMoyen,
+      prix,
+    }),
+    alternates: alternatesForLogicalPath(`/taux-immobilier/${city.slug}`, params.locale),
     ...(isDynamic && { robots: { index: false } }),
   }
 }
@@ -60,54 +69,57 @@ export default async function VillePage({
   const isDynamic = 'isDynamic' in city && city.isDynamic
   const dynamicCity = isDynamic ? (city as DynamicCity) : null
 
+  const ptzZone: PtzZone = dynamicCity?.ptzZone ?? getDepartmentData(city.departement).ptzZone
+
   const t = await getTranslations({ locale, namespace: 'ville' })
   const tCommon = await getTranslations({ locale, namespace: 'common' })
+  const tNav = await getTranslations({ locale, namespace: 'nav' })
+  const tRatesCity = await getTranslations({ locale, namespace: 'ratesCity' })
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pretimmopro.fr'
   const montantExemple = Math.round(city.prixM2 * 50 * 0.9 / 10000) * 10000
   const numLocale = locale === 'en' ? 'en-GB' : 'fr-FR'
 
+  const ptzFaqKey = (dynamicCity?.ptzZone ?? 'B1') as PtzZone
+  const faqPtzZoneText = locale === 'en' ? ptzFaqKey : PTZ_ZONE_LABELS[ptzFaqKey]
+
+  const total50 = (city.prixM2 * 50).toLocaleString(numLocale)
+  const borrow90 = (city.prixM2 * 50 * 0.9).toLocaleString(numLocale)
+
   const faqItems = [
     {
-      question: locale === 'en'
-        ? `What is the mortgage rate in ${city.nom} in 2026?`
-        : `Quel taux immobilier à ${city.nom} en 2026 ?`,
-      answer: locale === 'en'
-        ? `In ${city.nom}, the average 20-year rate in 2026 is approximately ${city.tauxMoyen}%.`
-        : `À ${city.nom}, le taux moyen estimé sur 20 ans en 2026 est d'environ ${city.tauxMoyen} %. Les meilleurs dossiers peuvent obtenir des taux inférieurs via un courtier local.`,
+      question: t('faqRateQ', { city: city.nom }),
+      answer: t('faqRateA', { city: city.nom, taux: String(city.tauxMoyen) }),
     },
     {
-      question: locale === 'en'
-        ? `What is the price per m² in ${city.nom}?`
-        : `Quel est le prix au m² à ${city.nom} ?`,
-      answer: locale === 'en'
-        ? `The average price per m² in ${city.nom} is about ${city.prixM2.toLocaleString(numLocale)} € in 2026.`
-        : `Le prix moyen au m² à ${city.nom} est d'environ ${city.prixM2.toLocaleString('fr-FR')} € en 2026${isDynamic ? ` (estimation basée sur la moyenne du département ${dynamicCity?.nomDepartement})` : ''}.`,
+      question: t('faqPriceQ', { city: city.nom }),
+      answer:
+        t('faqPriceAStatic', { city: city.nom, prix: city.prixM2.toLocaleString(numLocale) }) +
+        (isDynamic && dynamicCity
+          ? t('faqPriceADynamicSuffix', { dept: dynamicCity.nomDepartement })
+          : ''),
     },
     {
-      question: locale === 'en'
-        ? `How much to borrow to buy in ${city.nom}?`
-        : `Combien emprunter pour acheter à ${city.nom} ?`,
-      answer: locale === 'en'
-        ? `For a 50m² in ${city.nom} (~${(city.prixM2 * 50).toLocaleString(numLocale)} €), you need ~${(city.prixM2 * 50 * 0.9).toLocaleString(numLocale)} € with 10% down.`
-        : `Pour un bien de 50 m² à ${city.nom} (soit environ ${(city.prixM2 * 50).toLocaleString('fr-FR')} €), il vous faudrait emprunter environ ${(city.prixM2 * 50 * 0.9).toLocaleString('fr-FR')} € avec 10 % d'apport.`,
+      question: t('faqBorrowQ', { city: city.nom }),
+      answer: t('faqBorrowA', { city: city.nom, total50, borrow: borrow90 }),
     },
     {
-      question: locale === 'en'
-        ? `Is PTZ available in ${city.nom}?`
-        : `Le PTZ est-il accessible à ${city.nom} ?`,
-      answer: locale === 'en'
-        ? `${city.nom} is likely in PTZ zone ${dynamicCity?.ptzZone ?? 'B1'}.`
-        : `${city.nom} est situé en ${PTZ_ZONE_LABELS[dynamicCity?.ptzZone ?? 'B1']}. Cette zone détermine le montant maximal du PTZ et les conditions d'éligibilité.`,
+      question: t('faqPtzQ', { city: city.nom }),
+      answer: t('faqPtzA', { city: city.nom, zone: faqPtzZoneText }),
     },
   ]
+
+  const popSuffix =
+    dynamicCity && dynamicCity.population > 0
+      ? t('popApprox', { k: String(Math.round(dynamicCity.population / 1000)) })
+      : ''
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Breadcrumb
         items={[
           { label: tCommon('home'), href: '/' },
-          { label: 'Taux par ville', href: '/taux-immobilier' },
+          { label: tNav('ratesByCity'), href: '/taux-immobilier' },
           { label: city.nom, href: `/taux-immobilier/${city.slug}` },
         ]}
       />
@@ -120,8 +132,8 @@ export default async function VillePage({
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'LocalBusiness',
-            name: `Crédit immobilier à ${city.nom}`,
-            description: `Taux immobiliers et simulateur de prêt pour ${city.nom}`,
+            name: t('jsonLdName', { city: city.nom }),
+            description: t('jsonLdDesc', { city: city.nom }),
             url: `${siteUrl}/taux-immobilier/${city.slug}`,
             address: {
               '@type': 'PostalAddress',
@@ -133,108 +145,114 @@ export default async function VillePage({
         }}
       />
 
-      {/* ── Badge données estimées (villes dynamiques uniquement) ── */}
       {isDynamic && dynamicCity && (
         <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-6 text-sm">
           <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
           <div>
-            <span className="font-medium text-amber-800">Données estimées</span>
+            <span className="font-medium text-amber-800">{t('dynamicBadgeTitle')}</span>
             <span className="text-amber-700">
-              {' '}— {city.nom} ({dynamicCity.codePostal}) · Dép. {dynamicCity.nomDepartement} · Zone PTZ {dynamicCity.ptzZone}.
-              Les prix au m² sont des moyennes départementales ; les taux sont calculés à partir des données nationales.
+              {' '}
+              {t('dynamicBadgeText', {
+                city: city.nom,
+                cp: dynamicCity.codePostal,
+                dept: dynamicCity.nomDepartement,
+                ptz: dynamicCity.ptzZone,
+              })}
             </span>
             {' '}
             <Link href="/taux-immobilier" className="font-medium text-amber-700 underline underline-offset-2 hover:text-amber-900">
-              Rechercher une autre ville <ArrowRight className="inline w-3 h-3" />
+              {t('dynamicBadgeLink')} <ArrowRight className="inline w-3 h-3" />
             </Link>
           </div>
         </div>
       )}
 
-      {/* ── En-tête ── */}
       <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
-        Taux immobilier à {city.nom} en 2026
+        {t('h1', { city: city.nom })}
       </h1>
       <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-        Consultez les taux de crédit immobilier à {city.nom} en 2026.{' '}
-        Taux moyen sur 20 ans :{' '}
+        {t('intro', { city: city.nom })}{' '}
         <strong className="text-primary-600">
-          {city.tauxMoyen.toFixed(2).replace('.', ',')} %
+          {city.tauxMoyen.toFixed(2).replace('.', locale === 'en' ? '.' : ',')} %
         </strong>.
         {isDynamic && dynamicCity && (
           <span className="text-sm text-gray-400 ml-2">
-            (estimation — dép. {dynamicCity.nomDepartement})
+            {t('estimationDept', { dept: dynamicCity.nomDepartement })}
           </span>
         )}
       </p>
 
-      {/* ── Zone PTZ (villes dynamiques) ── */}
       {isDynamic && dynamicCity && (
         <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
           <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
-            <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-1">Zone PTZ</p>
+            <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-1">{t('ptzCardTitle')}</p>
             <p className="font-bold text-gray-900">{PTZ_ZONE_LABELS[dynamicCity.ptzZone]}</p>
-            <p className="text-xs text-gray-500 mt-1">
-              Détermine votre montant PTZ maximal
-            </p>
+            <p className="text-xs text-gray-500 mt-1">{t('ptzCardHint')}</p>
           </div>
           <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Département</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{t('deptCardTitle')}</p>
             <p className="font-bold text-gray-900">{dynamicCity.nomDepartement} ({dynamicCity.departement})</p>
             <p className="text-xs text-gray-500 mt-1">
-              Code postal : {dynamicCity.codePostal}
-              {dynamicCity.population > 0 && ` · ~${Math.round(dynamicCity.population / 1000)}k hab.`}
+              {t('postalLine', { cp: dynamicCity.codePostal, pop: popSuffix })}
             </p>
           </div>
         </section>
       )}
 
-      {/* ── Taux live — streaming via Suspense ── */}
       <section className="mb-8">
         <Suspense fallback={<VilleRatesSkeleton />}>
           <VilleRatesSection
             city={city}
             locale={locale}
             labels={{
-              averageRate20y:  t('averageRate20y'),
-              avgPriceM2:      t('avgPriceM2'),
-              department:      t('department'),
-              localBrokers:    t('localBrokers'),
-              averageRate:     t('averageRate'),
-              minRate:         t('minRate'),
-              maxRate:         t('maxRate'),
-              dataNote:        t('dataNote', { source: isDynamic ? `estimation dept. ${dynamicCity?.nomDepartement}` : 'Banque de France' }),
-              liveData:        t('liveData', { source: '' }).trim(),
-              indicativeData:  t('indicativeData'),
-              duration:        locale === 'en' ? 'Duration' : 'Durée',
+              averageRate20y: t('averageRate20y'),
+              avgPriceM2: t('avgPriceM2'),
+              department: t('department'),
+              localBrokers: t('localBrokers'),
+              averageRate: t('averageRate'),
+              minRate: t('minRate'),
+              maxRate: t('maxRate'),
+              dataNote: t('dataNote'),
+              liveData: t('liveData', { source: '' }).trim(),
+              indicativeData: t('indicativeData'),
+              duration: t('durationTableHeader'),
               ratesByDuration: t('ratesByDuration', { city: city.nom }),
+              yearsShort: t('durationYears'),
+              m2DvfBadgeLine: tRatesCity('m2DvfBadgeLine'),
             }}
           />
         </Suspense>
       </section>
 
-      {/* ── PTZ info (villes dynamiques) ── */}
+      <Suspense fallback={<VillePrixSkeleton />}>
+        <VillePrixSection
+          codeInsee={city.codeInsee}
+          nom={city.nom}
+          prixFallback={city.prixM2}
+          ptzZone={ptzZone}
+          locale={locale}
+        />
+      </Suspense>
+
       {isDynamic && dynamicCity && (
         <section className="bg-white border border-gray-200 rounded-xl p-6 mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-3">
-            PTZ à {city.nom} — {PTZ_ZONE_LABELS[dynamicCity.ptzZone]}
+            {t('ptzDynamicTitle', { city: city.nom, zone: PTZ_ZONE_LABELS[dynamicCity.ptzZone] })}
           </h2>
           <p className="text-sm text-gray-600 leading-relaxed mb-4">
-            En tant que commune classée en {dynamicCity.ptzZone}, {city.nom} ouvre droit au Prêt à Taux Zéro
             {dynamicCity.ptzZone === 'C' || dynamicCity.ptzZone === 'B2'
-              ? ' pour les logements anciens avec travaux (≥ 25 % du coût total) et pour tous les logements neufs.'
-              : ' pour les logements neufs et anciens avec travaux sur toutes les zones.'}
+              ? t('ptzDynamicBodyC', { zone: dynamicCity.ptzZone, city: city.nom })
+              : t('ptzDynamicBodyOther', { zone: dynamicCity.ptzZone, city: city.nom })}
           </p>
           <Link
             href="/articles/ptz-2026"
             className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:underline"
           >
-            Consulter le guide PTZ 2026 complet <ArrowRight className="w-3.5 h-3.5" />
+            {t('ptzGuideLink')} <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </section>
       )}
 
-      {/* ── Prix immobiliers ── */}
       <section className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 mb-8">
         <h2 className="text-xl font-bold text-gray-900 mb-3">
           {t('propertyPrices', { city: city.nom })}
@@ -255,13 +273,12 @@ export default async function VillePage({
         </div>
         <p className="text-xs text-gray-400 mt-3 text-center">
           {t('priceNote', { price: city.prixM2.toLocaleString(numLocale) })}
-          {isDynamic && ' · Estimation basée sur la moyenne départementale'}
+          {isDynamic && t('propertyEstimationSuffix')}
         </p>
       </section>
 
       <AdUnit slot="local_middle" format="rectangle" className="mb-8" />
 
-      {/* ── Simulateur ── */}
       <section className="mb-10">
         <h2 className="text-xl font-bold text-gray-900 mb-2">
           {t('simulateIn', { city: city.nom })}
@@ -272,7 +289,6 @@ export default async function VillePage({
         <SimulateurPret montantInitial={montantExemple} tauxInitial={city.tauxMoyen} />
       </section>
 
-      {/* ── Courtiers ── */}
       <section className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-8">
         <h2 className="text-xl font-bold text-gray-900 mb-3">
           {t('brokersIn', { city: city.nom })}
@@ -283,7 +299,6 @@ export default async function VillePage({
         <p className="text-sm text-gray-500">{t('brokersNetworks')}</p>
       </section>
 
-      {/* ── FAQ ── */}
       <section>
         <h2 className="text-xl font-bold text-gray-900 mb-5">
           {t('faqTitle', { city: city.nom })}

@@ -32,10 +32,12 @@ const res = await fetch(url, { next: { revalidate: 86400 } })
 
 ## Structure d'une page outil
 ```tsx
-// 1. Metadata SEO avec canonical
-export const metadata: Metadata = {
-  title: '...',
-  alternates: { canonical: '/simulateur-pret' },
+// 1. generateMetadata + alternates (canonical + hreflang via @/lib/seo-alternates)
+export async function generateMetadata({ params: { locale } }) {
+  return {
+    title: '...',
+    alternates: alternatesForLogicalPath('/simulateur-pret', locale),
+  }
 }
 // 2. Breadcrumb + H1 + intro
 // 3. <AdUnit slot="before_tool" format="leaderboard" />
