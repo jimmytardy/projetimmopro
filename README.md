@@ -13,20 +13,20 @@ Site de crédit immobilier français optimisé pour AdSense et le SEO, construit
 
 ## Prérequis
 
-- Node.js 18+
-- npm 9+
+- Node.js 20+ (recommandé)
+- [pnpm](https://pnpm.io/) 9+ (`corepack enable` puis `corepack prepare pnpm@9.15.4 --activate`)
 
 ## Installation
 
 ```bash
 cd pretimmopro
-npm install
+pnpm install
 ```
 
 ## Développement
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 L'application est disponible sur [http://localhost:3000](http://localhost:3000).
@@ -36,7 +36,7 @@ En développement, les emplacements AdSense affichent des **placeholders gris** 
 ## Build de production
 
 ```bash
-npm run build
+pnpm build
 ```
 
 Le script `postbuild` génère automatiquement le sitemap XML et le fichier `robots.txt`.
@@ -185,10 +185,10 @@ Contenu de l'article en Markdown...
 
 | Commande | Description |
 |----------|-------------|
-| `npm run dev` | Serveur de développement (localhost:3000) |
-| `npm run build` | Build de production + génération sitemap |
-| `npm run start` | Serveur de production |
-| `npm run lint` | Vérification ESLint |
+| `pnpm dev` | Serveur de développement (localhost:3000) |
+| `pnpm build` | Build de production + génération sitemap |
+| `pnpm start` | Serveur de production |
+| `pnpm lint` | Vérification ESLint |
 
 ## Licence
 

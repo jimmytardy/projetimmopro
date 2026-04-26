@@ -1,16 +1,16 @@
 # syntax=docker/dockerfile:1
-# Image runtime légère (Next.js standalone). Build : voir docker-compose.yml (build.args).
+# Image runtime légère (Next.js standalone). Dépendances : pnpm (voir package.json packageManager).
 
 FROM node:20-alpine AS base
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat \
+  && corepack enable \
+  && corepack prepare pnpm@9.15.4 --activate
 WORKDIR /app
 
-FROM base AS deps
-COPY package.json package-lock.json ./
-RUN npm ci
-
 FROM base AS builder
-COPY --from=deps /app/node_modules ./node_modules
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
 COPY . .
 
 ARG NEXT_PUBLIC_SITE_URL=https://pretimmopro.fr
@@ -28,10 +28,10 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
     NEXT_PUBLIC_MATOMO_URL=${NEXT_PUBLIC_MATOMO_URL} \
     NEXT_PUBLIC_MATOMO_SITE_ID=${NEXT_PUBLIC_MATOMO_SITE_ID}
 
-# Build sans dotenv-cli (pas de .env.local dans l’image de build)
-RUN npx next build
+# Évite dotenv-cli (pas de .env.local dans l’image)
+RUN pnpm exec next build
 
-FROM base AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production \
@@ -39,7 +39,8 @@ ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0
 
-RUN addgroup --system --gid 1001 nodejs \
+RUN apk add --no-cache libc6-compat \
+  && addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
