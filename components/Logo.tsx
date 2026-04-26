@@ -101,5 +101,3 @@ export default function Logo({ size = 32, showName = true, nameColor, className 
     </div>
   )
 }
-
-console.log('coucou');
