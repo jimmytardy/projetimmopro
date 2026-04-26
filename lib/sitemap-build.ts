@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 import fs from 'fs'
 import path from 'path'
 import { CITIES } from '@/lib/cities'
+import { CONTENT_HUB_SLUGS } from '@/lib/content-hubs'
 import { pathnameForLocale, siteOrigin } from '@/lib/seo-alternates'
 
 const STATIC_LOGICAL = [
@@ -12,6 +13,8 @@ const STATIC_LOGICAL = [
   '/remboursement-anticipe',
   '/taux-fixe-vs-variable',
   '/guides',
+  ...CONTENT_HUB_SLUGS.map((s) => `/guides/${s}` as const),
+  '/a-propos',
   '/taux-immobilier',
   '/mentions-legales',
   '/cgu',
@@ -49,6 +52,12 @@ function priorityForLogical(logical: string): { priority: number; changeFrequenc
   } else if (logical === '/guides') {
     priority = 0.9
     changeFrequency = 'weekly'
+  } else if (logical.startsWith('/guides/')) {
+    priority = 0.85
+    changeFrequency = 'weekly'
+  } else if (logical === '/a-propos') {
+    priority = 0.75
+    changeFrequency = 'monthly'
   } else if (logical.startsWith('/taux-immobilier/')) {
     priority = 0.7
     changeFrequency = 'weekly'

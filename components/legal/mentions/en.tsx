@@ -96,6 +96,14 @@ export function MentionsEnContent() {
         compliance with applicable law.
       </p>
       <p>
+        Some links or advertising placements may be affiliate links: if you take action (sign-up,
+        subscription, contact request) with a partner, the publisher may receive a commission at no
+        extra cost to you. This revenue helps fund the site. Editorial content and simulator
+        formulas are not altered based on these partnerships. Where required by law or good
+        practice, promotional or affiliate links are disclosed next to the link or at the end of
+        the article.
+      </p>
+      <p>
         Links to PrêtImmoPro are permitted provided misleading presentation (inline frames, hidden
         deep linking) is not used and the publisher is informed by email.
       </p>

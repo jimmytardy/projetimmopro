@@ -6,6 +6,9 @@ import { notFound } from 'next/navigation'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import MatomoTracker from '@/components/analytics/MatomoTracker'
+import JsonLd from '@/components/seo/JsonLd'
+import { shouldBlockSearchIndexing } from '@/lib/seo-env'
+import { absoluteUrlFromPath, pathnameForLocale, siteOrigin } from '@/lib/seo-alternates'
 import { locales } from '@/i18n/navigation'
 
 const SidebarAd = dynamic(
@@ -67,14 +70,23 @@ export async function generateMetadata({
       description,
       images: ['/opengraph-image'],
     },
-    robots: {
-      index: true,
-      follow: true,
-      googleBot: {
-        index: true,
-        follow: true,
-      },
-    },
+    robots: shouldBlockSearchIndexing()
+      ? { index: false, follow: false, googleBot: { index: false, follow: false } }
+      : {
+          index: true,
+          follow: true,
+          googleBot: {
+            index: true,
+            follow: true,
+          },
+        },
+    ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+      ? {
+          verification: {
+            google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+          },
+        }
+      : {}),
   }
 }
 
@@ -102,9 +114,27 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale)
   const messages = await getMessages()
+  const tHome = await getTranslations({ locale, namespace: 'home' })
+  const rootPath = pathnameForLocale('/', locale)
+  const rootAbs = absoluteUrlFromPath(rootPath)
+  const orgLogo = `${siteOrigin()}/icon`
 
   return (
     <NextIntlClientProvider messages={messages}>
+      <JsonLd
+        type="WebSite"
+        name="PrêtImmoPro"
+        url={rootAbs}
+        description={tHome('metaDescription')}
+        inLanguage={locale === 'en' ? 'en-GB' : 'fr-FR'}
+      />
+      <JsonLd
+        type="Organization"
+        name="PrêtImmoPro"
+        url={siteOrigin()}
+        description={tHome('metaDescription')}
+        logoUrl={orgLogo}
+      />
       {/* Suivi Matomo — chargé côté client, aucun rendu DOM */}
       <MatomoTracker />
       <Header />

@@ -8,10 +8,16 @@ import path from 'path'
 import matter from 'gray-matter'
 import Breadcrumb from '@/components/seo/Breadcrumb'
 import JsonLd from '@/components/seo/JsonLd'
+import AffiliateDisclosure from '@/components/monetization/AffiliateDisclosure'
 import { Link } from '@/i18n/navigation'
 import { ArrowRight, Clock, Calendar } from 'lucide-react'
 
 const AdUnit = dynamic(() => import('@/components/ads/AdUnit'), { ssr: false })
+
+interface ArticleSource {
+  label: string
+  url: string
+}
 
 interface ArticleFrontmatter {
   title: string
@@ -19,6 +25,8 @@ interface ArticleFrontmatter {
   date: string
   lastModified: string
   keywords: string[]
+  author?: string
+  sources?: ArticleSource[]
 }
 
 function getArticleSlugs(): string[] {
@@ -204,6 +212,7 @@ export default async function ArticlePage({
         datePublished={frontmatter.date}
         dateModified={frontmatter.lastModified}
         url={`${siteUrl}/articles/${slug}`}
+        authorName={frontmatter.author ?? 'PrêtImmoPro'}
       />
 
       <header className="mb-8">
@@ -220,7 +229,37 @@ export default async function ArticlePage({
             {t('updatedOn')} {formatDate(frontmatter.lastModified)}
           </span>
         </div>
+        <p className="mt-3 text-sm text-gray-600">
+          <span className="font-medium text-gray-800">{t('authorLabel')} :</span>{' '}
+          {frontmatter.author ?? 'PrêtImmoPro'}
+        </p>
       </header>
+
+      <div className="mb-6">
+        <AffiliateDisclosure variant="article" />
+      </div>
+
+      {frontmatter.sources && frontmatter.sources.length > 0 && (
+        <section className="mb-8 rounded-xl border border-gray-200 bg-gray-50 px-4 py-4" aria-labelledby="sources-heading">
+          <h2 id="sources-heading" className="text-sm font-semibold text-gray-900 mb-3">
+            {t('sourcesTitle')}
+          </h2>
+          <ul className="space-y-2 text-sm">
+            {frontmatter.sources.map((s) => (
+              <li key={s.url}>
+                <a
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary-600 hover:underline font-medium"
+                >
+                  {s.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: htmlBefore }} />
 

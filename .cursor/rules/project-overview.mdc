@@ -13,6 +13,7 @@ Site de simulateurs de crédit immobilier français, optimisé SEO + AdSense.
 - **Recharts** pour les graphiques
 - **gray-matter** pour les articles MDX
 - **Sitemap / robots** : `app/sitemap.ts` + `app/robots.ts` (Next.js metadata routes)
+- **Déploiement Docker (VPS)** : `Dockerfile` + `docker-compose.yml`, sortie `standalone` ; règles infra partagées dans `.cursor/rules/infrastructure-vps.mdc`
 
 ## Palette obligatoire
 | Token | Hex | Usage |

@@ -1,0 +1,32 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://pretimmopro.fr}
+        NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION:-}
+        NEXT_PUBLIC_NO_INDEX: ${NEXT_PUBLIC_NO_INDEX:-false}
+        NEXT_PUBLIC_ADSENSE_CLIENT_ID: ${NEXT_PUBLIC_ADSENSE_CLIENT_ID:-}
+        NEXT_PUBLIC_MATOMO_URL: ${NEXT_PUBLIC_MATOMO_URL:-}
+        NEXT_PUBLIC_MATOMO_SITE_ID: ${NEXT_PUBLIC_MATOMO_SITE_ID:-}
+    image: pretimmopro:web
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      ADSENSE_CERT_AUTH_ID: ${ADSENSE_CERT_AUTH_ID:-}
+      ADS_TXT_EXTRA: ${ADS_TXT_EXTRA:-}
+      # Connexions futures (réseau postgres_network) — ne pas dupliquer Postgres/Keycloak ici
+      # DATABASE_URL: postgresql://admin:...@postgres:5432/pretimmopro
+      # KEYCLOAK_ISSUER: https://keycloak.example/realms/...
+    networks:
+      - default
+      - postgres_network
+
+networks:
+  postgres_network:
+    external: true

@@ -105,6 +105,15 @@ export function MentionsFrContent() {
         conformité à la réglementation en vigueur.
       </p>
       <p>
+        Certains liens ou encarts publicitaires peuvent être des liens d&apos;affiliation : en cas
+        d&apos;action de votre part (inscription, souscription, demande de contact) auprès d&apos;un
+        partenaire, l&apos;éditeur peut percevoir une rémunération sans surcoût pour vous. Cette
+        rémunération contribue au financement du site. Les contenus éditoriaux et les formules
+        des simulateurs ne sont pas modifiés en fonction de ces partenariats. Lorsque la loi ou
+        les bonnes pratiques l&apos;exigent, la nature promotionnelle ou affiliée du lien est
+        signalée à proximité du lien ou en fin d&apos;article.
+      </p>
+      <p>
         La création de liens hypertextes pointant vers le site PrêtImmoPro est libre sous
         réserve de ne pas utiliser des techniques de présentation trompeuses (inline frame,
         deep linking masqué) et d&apos;informer l&apos;éditeur par email.

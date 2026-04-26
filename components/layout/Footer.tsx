@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { Shield, FileText } from 'lucide-react'
 import Logo from '@/components/Logo'
+import AffiliateDisclosure from '@/components/monetization/AffiliateDisclosure'
 
 export default function Footer() {
   const t = useTranslations('footer')
@@ -73,6 +74,11 @@ export default function Footer() {
               {t('guides')}
             </h3>
             <ul className="space-y-2">
+              <li>
+                <Link href="/guides" className="text-sm text-gray-400 hover:text-white transition-colors">
+                  {t('guidesAll')}
+                </Link>
+              </li>
               {guides.map(({ href, label }) => (
                 <li key={href}>
                   <Link href={href as `/articles/${string}`} className="text-sm text-gray-400 hover:text-white transition-colors">
@@ -80,6 +86,11 @@ export default function Footer() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link href="/a-propos" className="text-sm text-gray-400 hover:text-white transition-colors">
+                  {t('about')}
+                </Link>
+              </li>
             </ul>
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4 mt-6">
               {t('ratesByCity')}
@@ -125,6 +136,10 @@ export default function Footer() {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="mb-8 max-w-3xl mx-auto">
+          <AffiliateDisclosure variant="footer" />
         </div>
 
         <div className="border-t border-gray-800 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">

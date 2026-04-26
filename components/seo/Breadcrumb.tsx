@@ -1,5 +1,6 @@
 import { getLocale, getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
+import { absoluteUrlFromPath, pathnameForLocale } from '@/lib/seo-alternates'
 import JsonLd from './JsonLd'
 
 interface BreadcrumbItem {
@@ -12,7 +13,6 @@ interface BreadcrumbProps {
 }
 
 export default async function Breadcrumb({ items }: BreadcrumbProps) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pretimmopro.fr'
   const locale = await getLocale()
   const t = await getTranslations({ locale, namespace: 'breadcrumb' })
 
@@ -22,7 +22,7 @@ export default async function Breadcrumb({ items }: BreadcrumbProps) {
         type="BreadcrumbList"
         items={items.map((item) => ({
           name: item.label,
-          url: `${siteUrl}${item.href}`,
+          url: absoluteUrlFromPath(pathnameForLocale(item.href, locale)),
         }))}
       />
       <nav aria-label={t('ariaLabel')} className="mb-4">

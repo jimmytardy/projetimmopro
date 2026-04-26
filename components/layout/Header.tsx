@@ -74,6 +74,10 @@ export default function Header() {
               {t('guides')}
             </Link>
 
+            <Link href="/a-propos" className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors">
+              {t('about')}
+            </Link>
+
             {/* Dropdown Taux par ville */}
             <div className="relative">
               <button
@@ -164,6 +168,13 @@ export default function Header() {
               onClick={() => setMenuOpen(false)}
             >
               {t('guides')}
+            </Link>
+            <Link
+              href="/a-propos"
+              className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              onClick={() => setMenuOpen(false)}
+            >
+              {t('about')}
             </Link>
             <p className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider mt-2">
               {t('ratesByCity')}

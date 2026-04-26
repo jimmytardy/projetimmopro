@@ -2,10 +2,9 @@ import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { alternatesForLogicalPath } from '@/lib/seo-alternates'
 import { Link } from '@/i18n/navigation'
-import fs from 'fs'
-import path from 'path'
-import matter from 'gray-matter'
-import { ArrowRight, Clock, BookOpen, Tag } from 'lucide-react'
+import { ArrowRight, Clock, BookOpen, Tag, Layers } from 'lucide-react'
+import { CONTENT_HUB_SLUGS, type ContentHubSlug } from '@/lib/content-hubs'
+import { getAllArticlesMeta } from '@/lib/articles-meta'
 import Breadcrumb from '@/components/seo/Breadcrumb'
 import JsonLd from '@/components/seo/JsonLd'
 import AdUnit from '@/components/ads/AdUnit'
@@ -25,17 +24,6 @@ export async function generateMetadata({
   }
 }
 
-interface ArticleMeta {
-  slug: string
-  title: string
-  description: string
-  date: string
-  lastModified: string
-  readTime?: number
-  category?: string
-  keywords: string[]
-}
-
 const CATEGORY_COLORS: Record<CategoryKey, string> = {
   Financement: 'bg-blue-100 text-blue-700',
   Dossier: 'bg-green-100 text-green-700',
@@ -43,22 +31,18 @@ const CATEGORY_COLORS: Record<CategoryKey, string> = {
   Marché: 'bg-orange-100 text-orange-700',
 }
 
-function getAllArticles(): ArticleMeta[] {
-  const articlesDir = path.join(process.cwd(), 'content', 'articles')
-  if (!fs.existsSync(articlesDir)) return []
+const HUB_CARD_TITLE: Record<ContentHubSlug, 'card_financement_title' | 'card_dossier_title' | 'card_aides_title' | 'card_marche_title'> = {
+  financement: 'card_financement_title',
+  dossier: 'card_dossier_title',
+  aides: 'card_aides_title',
+  marche: 'card_marche_title',
+}
 
-  return fs
-    .readdirSync(articlesDir)
-    .filter((f) => f.endsWith('.mdx') || f.endsWith('.md'))
-    .map((filename) => {
-      const raw = fs.readFileSync(path.join(articlesDir, filename), 'utf8')
-      const { data } = matter(raw)
-      return {
-        slug: filename.replace(/\.mdx?$/, ''),
-        ...(data as Omit<ArticleMeta, 'slug'>),
-      }
-    })
-    .sort((a, b) => new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime())
+const HUB_CARD_DESC: Record<ContentHubSlug, 'card_financement_desc' | 'card_dossier_desc' | 'card_aides_desc' | 'card_marche_desc'> = {
+  financement: 'card_financement_desc',
+  dossier: 'card_dossier_desc',
+  aides: 'card_aides_desc',
+  marche: 'card_marche_desc',
 }
 
 export default async function GuidesPage({
@@ -68,10 +52,11 @@ export default async function GuidesPage({
 }) {
   setRequestLocale(locale)
   const t = await getTranslations({ locale, namespace: 'guides' })
+  const tHub = await getTranslations({ locale, namespace: 'guidesHub' })
   const tCommon = await getTranslations({ locale, namespace: 'common' })
   const tArticles = await getTranslations({ locale, namespace: 'articles' })
   const tTools = await getTranslations({ locale, namespace: 'tools' })
-  const articles = getAllArticles()
+  const articles = getAllArticlesMeta()
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pretimmopro.fr'
 
   const OUTILS_LIES = [
@@ -124,6 +109,34 @@ export default async function GuidesPage({
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">{t('pageTitle')}</h1>
         <p className="text-lg text-gray-600 max-w-2xl">{t('subtitle')}</p>
       </header>
+
+      <section className="mb-10 rounded-2xl border border-primary-100 bg-primary-50/60 p-6 sm:p-8" aria-labelledby="thematiques-heading">
+        <div className="flex items-center gap-2 mb-4">
+          <Layers className="w-5 h-5 text-primary-600" aria-hidden />
+          <h2 id="thematiques-heading" className="text-lg font-bold text-gray-900">
+            {tHub('thematiquesTitle')}
+          </h2>
+        </div>
+        <p className="text-sm text-gray-600 mb-6 max-w-3xl">{tHub('thematiquesSubtitle')}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {CONTENT_HUB_SLUGS.map((hub) => (
+            <Link
+              key={hub}
+              href={`/guides/${hub}` as `/guides/${ContentHubSlug}`}
+              className="group rounded-xl border border-white bg-white p-5 shadow-sm hover:border-primary-200 hover:shadow-md transition-all"
+            >
+              <h3 className="font-semibold text-gray-900 group-hover:text-primary-700 mb-2">
+                {tHub(HUB_CARD_TITLE[hub])}
+              </h3>
+              <p className="text-sm text-gray-600 leading-relaxed mb-3">{tHub(HUB_CARD_DESC[hub])}</p>
+              <span className="inline-flex items-center gap-1 text-sm font-medium text-primary-600">
+                {tHub('ctaHub')}
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       {/* Bannière pub après le header */}
       <AdUnit slot="guides_banner_top" format="leaderboard" className="mb-8 w-full" />

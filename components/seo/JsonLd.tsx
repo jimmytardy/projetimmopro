@@ -35,11 +35,29 @@ interface BreadcrumbListProps {
   items: BreadcrumbItem[]
 }
 
+interface WebSiteProps {
+  type: 'WebSite'
+  name: string
+  url: string
+  description?: string
+  inLanguage?: string
+}
+
+interface OrganizationProps {
+  type: 'Organization'
+  name: string
+  url: string
+  description?: string
+  logoUrl?: string
+}
+
 type JsonLdProps =
   | WebApplicationProps
   | ArticleProps
   | FAQPageProps
   | BreadcrumbListProps
+  | WebSiteProps
+  | OrganizationProps
 
 function buildSchema(props: JsonLdProps): Record<string, unknown> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pretimmopro.fr'
@@ -105,6 +123,33 @@ function buildSchema(props: JsonLdProps): Record<string, unknown> {
           name: item.name,
           item: item.url,
         })),
+      }
+
+    case 'WebSite':
+      return {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: props.name,
+        url: props.url,
+        description: props.description,
+        inLanguage: props.inLanguage,
+        publisher: {
+          '@type': 'Organization',
+          name: 'PrêtImmoPro',
+          url: siteUrl,
+        },
+      }
+
+    case 'Organization':
+      return {
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: props.name,
+        url: props.url,
+        description: props.description,
+        ...(props.logoUrl
+          ? { logo: { '@type': 'ImageObject', url: props.logoUrl } }
+          : {}),
       }
   }
 }
