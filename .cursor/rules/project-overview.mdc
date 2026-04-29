@@ -14,6 +14,7 @@ Site de simulateurs de crédit immobilier français, optimisé SEO + AdSense.
 - **gray-matter** pour les articles MDX
 - **Sitemap / robots** : `app/sitemap.ts` + `app/robots.ts` (Next.js metadata routes)
 - **Déploiement Docker (VPS)** : `Dockerfile` + `docker-compose.yml`, sortie `standalone` ; règles infra partagées dans `.cursor/rules/infrastructure-vps.mdc`
+- **Environnement** : un seul modèle versionné **`.env.example`** (copie en `.env` pour Compose) — pas de second fichier « docker » ; pas de lancement prévu via `next dev` sur l’hôte
 
 ## Palette obligatoire
 | Token | Hex | Usage |

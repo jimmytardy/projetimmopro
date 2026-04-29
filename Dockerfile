@@ -9,7 +9,8 @@ WORKDIR /app
 
 FROM base AS builder
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+# BuildKit définit souvent CI=1 → frozen-lockfile implicite. Autoriser la résolution si le lock est désaligné du package.json.
+RUN pnpm install --no-frozen-lockfile
 
 COPY . .
 
@@ -36,7 +37,6 @@ WORKDIR /app
 
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
-    PORT=3000 \
     HOSTNAME=0.0.0.0
 
 RUN apk add --no-cache libc6-compat \

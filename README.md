@@ -13,61 +13,30 @@ Site de crédit immobilier français optimisé pour AdSense et le SEO, construit
 
 ## Prérequis
 
-- Node.js 20+ (recommandé)
-- [pnpm](https://pnpm.io/) 9+ (`corepack enable` puis `corepack prepare pnpm@9.15.4 --activate`)
+- **Docker** et **Docker Compose** (plugin `docker compose`)
+- Réseau externe **`postgres_network`** si vous suivez l’infra VPS partagée (voir `.cursor/rules/infrastructure-vps.mdc`)
 
-## Installation
+## Lancer le site (Docker uniquement)
+
+Ce dépôt n’est **pas** prévu pour `pnpm dev` / `next dev` sur la machine hôte : les scripts `dev`, `build` et `start` affichent un message d’erreur explicite.
 
 ```bash
 cd pretimmopro
-pnpm install
+cp .env.example .env
+# Éditer .env (AdSense, Matomo, URL publique, etc.)
+
+docker compose up --build
 ```
 
-## Développement
+L’app est exposée sur **`http://localhost:${HOST_PORT:-3000}`** (voir `HOST_PORT` dans `.env` / `docker-compose.yml`).
 
-```bash
-pnpm dev
-```
+Les emplacements AdSense utilisent les vraies clés fournies dans l’environnement du conteneur ; sans configuration, les placeholders peuvent s’afficher selon les composants.
 
-L'application est disponible sur [http://localhost:3000](http://localhost:3000).
+Le **sitemap** et **robots** sont produits au build Next dans l’image.
 
-En développement, les emplacements AdSense affichent des **placeholders gris** à la place des vraies publicités.
+### Alternative hébergée (optionnel)
 
-## Build de production
-
-```bash
-pnpm build
-```
-
-Le script `postbuild` génère automatiquement le sitemap XML et le fichier `robots.txt`.
-
-## Déploiement sur Vercel
-
-### Méthode 1 — Via l'interface Vercel (recommandée)
-
-1. Poussez votre code sur GitHub/GitLab/Bitbucket
-2. Connectez-vous sur [vercel.com](https://vercel.com)
-3. Cliquez "New Project" et importez votre dépôt
-4. Configurez les variables d'environnement (voir ci-dessous)
-5. Cliquez "Deploy"
-
-### Méthode 2 — Via la CLI Vercel
-
-```bash
-npm install -g vercel
-vercel login
-vercel --prod
-```
-
-### Variables d'environnement sur Vercel
-
-Dans le dashboard Vercel > Settings > Environment Variables, ajoutez :
-
-| Variable | Valeur | Description |
-|----------|--------|-------------|
-| `NEXT_PUBLIC_ADSENSE_CLIENT_ID` | `ca-pub-XXXXXXXXXXXXXXXX` | Votre ID AdSense |
-| `NEXT_PUBLIC_SITE_URL` | `https://pretimmopro.fr` | URL de production |
-| `NEXT_PUBLIC_GA_ID` | `G-XXXXXXXXXX` | ID Google Analytics (optionnel) |
+Un déploiement type **Vercel** reste possible techniquement (build Next classique + variables d’environnement dans le dashboard), mais le flux documenté et les variables d’exemple sont orientés **Docker / VPS**.
 
 ## Configuration AdSense
 
@@ -79,7 +48,7 @@ Dans le dashboard Vercel > Settings > Environment Variables, ajoutez :
 
 ### 2. Remplacer les IDs dans le projet
 
-Dans `.env.local` (développement) et sur Vercel (production) :
+Dans **`.env`** (chargé par Docker Compose, non versionné) :
 
 ```bash
 NEXT_PUBLIC_ADSENSE_CLIENT_ID=ca-pub-VOTRE-VRAI-ID
@@ -138,7 +107,7 @@ pretimmopro/
 ├── public/
 ├── next.config.js
 ├── tailwind.config.ts
-└── .env.local
+└── .env                 # copie de .env.example (Docker Compose), non versionné
 ```
 
 ## Ajouter un article MDX
@@ -185,10 +154,11 @@ Contenu de l'article en Markdown...
 
 | Commande | Description |
 |----------|-------------|
-| `pnpm dev` | Serveur de développement (localhost:3000) |
-| `pnpm build` | Build de production + génération sitemap |
-| `pnpm start` | Serveur de production |
-| `pnpm lint` | Vérification ESLint |
+| `pnpm docker:up` / `docker compose up --build` | Construire l’image et lancer le conteneur |
+| `pnpm docker:down` / `docker compose down` | Arrêter les conteneurs du projet |
+| `pnpm dev` / `pnpm build` / `pnpm start` | **Désactivés** — message invitant à utiliser Docker |
+| `pnpm lint` | ESLint (peut s’exécuter hors conteneur pour la CI / l’éditeur) |
+| `pnpm generate-prices` | Script Node utilitaire (données villes) |
 
 ## Licence
 

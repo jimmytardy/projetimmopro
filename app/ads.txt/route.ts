@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server'
 
+/** Même valeur que le fallback du script AdSense dans app/layout.tsx */
+const DEFAULT_ADSENSE_CLIENT_ID = 'ca-pub-7401335592359033'
+/** ID de certification Google (IAB), recommandé sur la ligne google.com */
+const DEFAULT_ADSENSE_CERT_AUTH_ID = 'f08c47fec0942fa0'
+
 /**
  * Route handler — sert /ads.txt dynamiquement depuis les variables d'environnement.
  *
@@ -11,24 +16,23 @@ import { NextResponse } from 'next/server'
  *   ADSENSE_CERT_AUTH_ID            → certification authority ID Google (f08c47fec0942fa0)
  *   ADS_TXT_EXTRA                   → lignes supplémentaires séparées par \n (autres régies)
  *
- * Pour ajouter une régie publicitaire supplémentaire dans .env.local :
+ * Pour ajouter une régie publicitaire supplémentaire dans .env (Docker Compose) :
  *   ADS_TXT_EXTRA=openx.com, 123456, DIRECT\nappnexus.com, 789, RESELLER
  */
 export async function GET() {
-  const clientId  = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID ?? ''
-  const certAuthId = process.env.ADSENSE_CERT_AUTH_ID ?? ''
+  const envClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID?.trim()
+  const clientId  = envClient || DEFAULT_ADSENSE_CLIENT_ID
+  const envCert   = process.env.ADSENSE_CERT_AUTH_ID?.trim()
+  const certAuthId = envCert || DEFAULT_ADSENSE_CERT_AUTH_ID
   const extra      = process.env.ADS_TXT_EXTRA ?? ''
 
   const lines: string[] = []
 
-  // Ligne Google AdSense principale
-  if (clientId) {
-    // NEXT_PUBLIC_ADSENSE_CLIENT_ID = "ca-pub-XXXX"
-    // ads.txt attend "google.com, pub-XXXX, DIRECT, <certId>"
-    const publisherId = clientId.startsWith('ca-') ? clientId.slice(3) : clientId
-    const certPart    = certAuthId ? `, ${certAuthId}` : ''
-    lines.push(`google.com, ${publisherId}, DIRECT${certPart}`)
-  }
+  // Ligne Google AdSense (alignée sur le script chargé dans layout.tsx)
+  // NEXT_PUBLIC_ADSENSE_CLIENT_ID = "ca-pub-XXXX" → ads.txt : "google.com, pub-XXXX, DIRECT, <certId>"
+  const publisherId = clientId.startsWith('ca-') ? clientId.slice(3) : clientId
+  const certPart    = certAuthId ? `, ${certAuthId}` : ''
+  lines.push(`google.com, ${publisherId}, DIRECT${certPart}`)
 
   // Lignes supplémentaires (autres régies, RESELLER, etc.)
   if (extra) {

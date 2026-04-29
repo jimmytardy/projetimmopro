@@ -4,9 +4,11 @@
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
-    "dev": "dotenv -e .env.local -- next dev",
-    "build": "dotenv -e .env.local -- next build",
-    "start": "dotenv -e .env.local -- next start",
+    "dev": "node -e \"console.error('\\nPrêtImmoPro : exécution uniquement via Docker.\\n  docker compose up --build\\n'); process.exit(1)\"",
+    "build": "node -e \"console.error('\\nBuild : uniquement via Docker (image multi-etapes).\\n  docker compose build\\n'); process.exit(1)\"",
+    "start": "node -e \"console.error('\\nDémarrage : uniquement via Docker.\\n  docker compose up\\n'); process.exit(1)\"",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down",
     "lint": "next lint",
     "generate-prices": "node scripts/generate-city-prices.mjs"
   },
@@ -29,7 +31,6 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.20",
-    "dotenv-cli": "^11.0.0",
     "eslint": "^8.57.0",
     "eslint-config-next": "14.2.18",
     "postcss": "^8.4.47",
